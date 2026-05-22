@@ -154,27 +154,36 @@ export default function UploadPage() {
             <label className="block text-[11px] tracking-[0.3em] uppercase mb-3 text-sunset-200/80">
               Photo
             </label>
-            <div
-              className="relative rounded-2xl overflow-hidden bg-black/30 border border-white/10 aspect-[4/5] flex items-center justify-center cursor-pointer"
-              onClick={() => libraryInput.current?.click()}
-            >
-              {preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview} alt="preview" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-center px-6">
-                  <p className="font-serif italic text-xl text-sunset-100">
-                    Choose a photo
+
+            {/* Compact preview only when a photo is picked */}
+            {preview && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-2.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={preview}
+                  alt="preview"
+                  className="w-14 h-14 rounded-lg object-cover border border-white/10"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-serif italic text-sunset-50 leading-tight">
+                    Photo ready
                   </p>
-                  <p className="mt-2 text-xs text-sunset-100/60 tracking-wide">
-                    Selfies welcome
+                  <p className="text-[11px] text-sunset-100/55 tracking-wide truncate">
+                    {file?.name || "Tap a button below to replace"}
                   </p>
                 </div>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => { setFile(null); setPreview(null); }}
+                  className="text-[10px] tracking-[0.25em] uppercase text-sunset-100/60 hover:text-sunset-50 px-2 py-1"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
 
             {/* Two distinct buttons so iOS/Android show Library vs Camera reliably */}
-            <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => libraryInput.current?.click()}
