@@ -4,7 +4,7 @@
  *   - Anything that talks to Firebase / Vercel APIs → always network (never cache)
  *   - Offline fallback: serves cached /upload page
  */
-const VERSION = "lf-v1";
+const VERSION = "lf-v3";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -62,13 +62,18 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (isBypass(url)) return; // let it go to network unmodified
 
-  // Navigations: network-first, fall back to cached /upload
+  // Navigations: network-first, fall back to cached /upload.
+  // Never cache /display or /admin — they need to be fresh every load.
   if (req.mode === "navigate") {
+    const skipCache =
+      url.pathname.startsWith("/display") || url.pathname.startsWith("/admin");
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          if (!skipCache) {
+            const copy = res.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         })
         .catch(() => caches.match(req).then((m) => m || caches.match("/upload"))),
