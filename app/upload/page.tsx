@@ -81,27 +81,69 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="min-h-screen px-5 py-8 max-w-xl mx-auto">
-      <header className="text-center mb-8">
-        <p className="font-script text-2xl text-sunset-200">A farewell for</p>
-        <h1 className="font-serif text-5xl text-shimmer">Lydia</h1>
-        <p className="mt-3 text-sunset-100/80 text-sm">
-          Share a photo and a little message — it will appear on the big screen 💛
+    <main className="relative min-h-screen px-5 py-6 max-w-xl mx-auto overflow-hidden">
+      {/* Warm ambient background */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(ellipse at 20% 0%, rgba(255,176,107,0.25), transparent 55%), radial-gradient(ellipse at 80% 100%, rgba(255,107,107,0.22), transparent 55%), linear-gradient(180deg, #1a0d1f 0%, #2b0f1a 100%)",
+        }}
+      />
+      <div aria-hidden className="film-grain pointer-events-none fixed inset-0 -z-10 opacity-40" />
+
+      {/* Hero */}
+      <header className="text-center mb-7 pt-2">
+        <div className="relative inline-block mb-4">
+          <div className="polaroid inline-block -rotate-3 shadow-2xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/lydia-selfie.jpeg"
+              alt="Lydia"
+              className="w-28 h-28 object-cover rounded-sm"
+            />
+            <p className="font-script text-stone-700 text-center mt-1 text-lg">Lydia</p>
+          </div>
+          <span className="absolute -top-2 -right-3 text-2xl rotate-12">💛</span>
+        </div>
+
+        <p className="font-script text-2xl text-sunset-200">A warm farewell for</p>
+        <h1 className="font-serif text-5xl text-shimmer leading-tight">Lydia</h1>
+        <p className="mt-3 text-sunset-100/85 text-[15px] max-w-sm mx-auto leading-relaxed">
+          Snap a photo with her, jot a little note,
+          <br className="hidden sm:block" /> and watch it land on the big screen.
         </p>
+
+        {/* How it works */}
+        <div className="mt-5 grid grid-cols-3 gap-2 text-[11px] text-sunset-100/70">
+          <div className="rounded-xl bg-white/5 border border-white/10 px-2 py-2">
+            <div className="text-lg">📸</div>
+            <div className="mt-0.5">Add a photo</div>
+          </div>
+          <div className="rounded-xl bg-white/5 border border-white/10 px-2 py-2">
+            <div className="text-lg">💌</div>
+            <div className="mt-0.5">Write a note</div>
+          </div>
+          <div className="rounded-xl bg-white/5 border border-white/10 px-2 py-2">
+            <div className="text-lg">✨</div>
+            <div className="mt-0.5">See it on TV</div>
+          </div>
+        </div>
       </header>
 
       {status === "success" ? (
         <div className="glass rounded-3xl p-8 text-center">
           <div className="text-5xl mb-3">✨</div>
-          <h2 className="font-serif text-2xl mb-2">Thank you!</h2>
+          <h2 className="font-serif text-3xl mb-2 text-shimmer">Sent with love</h2>
           <p className="text-sunset-100/90 mb-6">
-            Your message is on its way to the screen.
+            Keep an eye on the screen — your moment is on its way.
           </p>
           <button
             onClick={() => setStatus("idle")}
-            className="px-5 py-3 rounded-full bg-sunset-500 hover:bg-sunset-600 text-white font-medium transition"
+            className="px-6 py-3 rounded-full bg-sunset-500 hover:bg-sunset-600 text-white font-medium transition shadow-lg"
           >
-            Share another
+            Share another 💛
           </button>
         </div>
       ) : (
@@ -220,6 +262,10 @@ export default function UploadPage() {
           </button>
         </form>
       )}
+
+      <footer className="mt-8 mb-4 text-center text-xs text-sunset-100/40 font-script text-sm">
+        made with love · for Lydia
+      </footer>
     </main>
   );
 }
