@@ -65,3 +65,38 @@ export async function DELETE(
     );
   }
 }
+
+/**
+ * PATCH /api/admin/messages/:id
+ *   Body: { hidden?: boolean }
+ *   Toggles display-visibility without deleting.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const { id } = params;
+  if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
+
+  let body: any = {};
+  try { body = await req.json(); } catch {}
+  const update: Record<string, any> = {};
+  if (typeof body.hidden === "boolean") update.hidden = body.hidden;
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: "no fields" }, { status: 400 });
+  }
+
+  try {
+    await getAdminDb().collection(COLLECTION).doc(id).update(update);
+    return NextResponse.json({ ok: true, id, ...update });
+  } catch (e: any) {
+    console.error("admin patch failed:", e);
+    return NextResponse.json(
+      { error: e?.message || "internal error" },
+      { status: 500 }
+    );
+  }
+}

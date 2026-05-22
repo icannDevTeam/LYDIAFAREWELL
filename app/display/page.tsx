@@ -101,17 +101,20 @@ export default function DisplayPage() {
       const unsub = onSnapshot(
         q,
         (snap) => {
-          const list: Message[] = snap.docs.map((d) => {
-            const data = d.data() as any;
-            const ts: Timestamp | undefined = data.createdAt;
-            return {
-              id: d.id,
-              imageUrl: data.imageUrl,
-              note: data.note || "",
-              author: data.author || undefined,
-              createdAt: ts?.toMillis?.() ?? Date.now(),
-            };
-          });
+          const list: Message[] = snap.docs
+            .map((d) => {
+              const data = d.data() as any;
+              const ts: Timestamp | undefined = data.createdAt;
+              return {
+                id: d.id,
+                imageUrl: data.imageUrl,
+                note: data.note || "",
+                author: data.author || undefined,
+                createdAt: ts?.toMillis?.() ?? Date.now(),
+                _hidden: data.hidden === true,
+              } as Message & { _hidden: boolean };
+            })
+            .filter((m) => !(m as any)._hidden);
           setMessages(list);
         },
         (err) => {

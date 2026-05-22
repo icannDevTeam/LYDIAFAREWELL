@@ -30,6 +30,7 @@ async function loadMessages(): Promise<AdminMessage[]> {
       author: data.author || null,
       storagePath: data.storagePath || null,
       createdAt,
+      hidden: data.hidden === true,
     };
   });
 }

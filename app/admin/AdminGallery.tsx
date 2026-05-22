@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type AdminMessage = {
   id: string;
@@ -9,9 +9,13 @@ export type AdminMessage = {
   author: string | null;
   storagePath: string | null;
   createdAt: number;
+  hidden?: boolean;
 };
 
 type View = "gallery" | "print";
+type Sort = "newest" | "oldest";
+
+const NEW_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
 
 export default function AdminGallery({
   messages: initial,
@@ -22,18 +26,45 @@ export default function AdminGallery({
 }) {
   const [messages, setMessages] = useState(initial);
   const [view, setView] = useState<View>("gallery");
+  const [sort, setSort] = useState<Sort>("newest");
   const [query, setQuery] = useState("");
+  const [showHidden, setShowHidden] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<AdminMessage | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  // Re-tick once a minute so "NEW" badges fade out without a refresh.
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Esc closes lightbox
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightbox(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return messages;
-    return messages.filter(
-      (m) =>
-        m.note.toLowerCase().includes(q) ||
-        (m.author || "").toLowerCase().includes(q),
+    let list = messages.slice();
+    if (!showHidden) list = list.filter((m) => !m.hidden);
+    if (q) {
+      list = list.filter(
+        (m) =>
+          m.note.toLowerCase().includes(q) ||
+          (m.author || "").toLowerCase().includes(q),
+      );
+    }
+    list.sort((a, b) =>
+      sort === "newest" ? b.createdAt - a.createdAt : a.createdAt - b.createdAt,
     );
-  }, [messages, query]);
+    return list;
+  }, [messages, query, sort, showHidden]);
 
   async function remove(id: string) {
     if (!confirm("Delete this message? This cannot be undone.")) return;
@@ -52,14 +83,49 @@ export default function AdminGallery({
     }
   }
 
+  async function toggleHidden(m: AdminMessage) {
+    const next = !m.hidden;
+    setBusy(m.id);
+    // optimistic
+    setMessages((prev) =>
+      prev.map((x) => (x.id === m.id ? { ...x, hidden: next } : x)),
+    );
+    try {
+      const res = await fetch(`/api/admin/messages/${m.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ hidden: next }),
+      });
+      if (!res.ok) throw new Error(`Update failed (${res.status})`);
+    } catch (err: any) {
+      // revert
+      setMessages((prev) =>
+        prev.map((x) => (x.id === m.id ? { ...x, hidden: !next } : x)),
+      );
+      alert(err?.message || "Update failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function logout() {
     await fetch("/api/admin/login", { method: "DELETE" });
     window.location.href = "/admin/login";
   }
 
+  function downloadZip() {
+    // Anchor click triggers the streaming download; cookie auths the request.
+    window.location.href = "/api/admin/export";
+  }
+
+  const visibleCount = messages.filter((m) => !m.hidden).length;
+  const hiddenCount = messages.length - visibleCount;
+
   return (
     <main className="min-h-screen text-stone-800" data-view={view}>
-      {/* Light theme background (overrides body) */}
       <style jsx global>{`
         body {
           background: #fbf5ec !important;
@@ -95,6 +161,21 @@ export default function AdminGallery({
 
           <div className="flex items-center rounded-full bg-white border border-stone-300 p-1 text-sm">
             <button
+              onClick={() => setSort("newest")}
+              className={`px-3 py-1 rounded-full ${sort === "newest" ? "bg-stone-800 text-white" : "text-stone-600"}`}
+            >
+              Newest
+            </button>
+            <button
+              onClick={() => setSort("oldest")}
+              className={`px-3 py-1 rounded-full ${sort === "oldest" ? "bg-stone-800 text-white" : "text-stone-600"}`}
+            >
+              Oldest
+            </button>
+          </div>
+
+          <div className="flex items-center rounded-full bg-white border border-stone-300 p-1 text-sm">
+            <button
               onClick={() => setView("gallery")}
               className={`px-3 py-1 rounded-full ${view === "gallery" ? "bg-stone-800 text-white" : "text-stone-600"}`}
             >
@@ -112,7 +193,15 @@ export default function AdminGallery({
             onClick={() => window.print()}
             className="px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium transition"
           >
-            🖨️ Print / Save PDF
+            Print / PDF
+          </button>
+
+          <button
+            onClick={downloadZip}
+            className="px-4 py-2 rounded-full bg-stone-800 hover:bg-stone-700 text-white text-sm font-medium transition"
+            title="Download every photo + a manifest of notes"
+          >
+            Download ZIP
           </button>
 
           <button
@@ -123,14 +212,23 @@ export default function AdminGallery({
           </button>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 pb-3 text-xs text-stone-500 flex flex-wrap gap-4">
-          <span>{messages.length} message{messages.length === 1 ? "" : "s"}</span>
-          {query && <span>{filtered.length} match{filtered.length === 1 ? "" : "es"}</span>}
+        <div className="max-w-7xl mx-auto px-6 pb-3 text-xs text-stone-500 flex flex-wrap items-center gap-4">
+          <span>{visibleCount} on display</span>
+          {hiddenCount > 0 && (
+            <button
+              onClick={() => setShowHidden((v) => !v)}
+              className="underline-offset-2 hover:underline"
+            >
+              {showHidden ? `hide ${hiddenCount} hidden` : `show ${hiddenCount} hidden`}
+            </button>
+          )}
+          {query && <span>· {filtered.length} match{filtered.length === 1 ? "" : "es"}</span>}
+          <span className="opacity-50">·</span>
           <a href="/display" target="_blank" rel="noreferrer" className="text-amber-700 hover:underline">
-            ↗ Open TV display
+            Open TV display
           </a>
           <a href="/upload" target="_blank" rel="noreferrer" className="text-amber-700 hover:underline">
-            ↗ Open upload page
+            Open upload page
           </a>
         </div>
       </header>
@@ -138,8 +236,7 @@ export default function AdminGallery({
       {/* Empty state */}
       {messages.length === 0 && (
         <div className="max-w-2xl mx-auto px-6 py-24 text-center">
-          <div className="text-6xl mb-4">🌅</div>
-          <h2 className="font-serif text-3xl mb-2">No messages yet</h2>
+          <h2 className="font-serif italic text-4xl mb-3">No messages yet</h2>
           <p className="text-stone-500">When guests upload, they will appear here.</p>
         </div>
       )}
@@ -148,52 +245,80 @@ export default function AdminGallery({
       {view === "gallery" && messages.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 py-8">
           <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 [column-fill:_balance]">
-            {filtered.map((m) => (
-              <article
-                key={m.id}
-                className="print-card mb-6 break-inside-avoid bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden group relative"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  className="w-full h-auto block"
-                />
-                <div className="p-4">
-                  <p className="font-serif text-[17px] leading-snug text-stone-800 whitespace-pre-wrap">
-                    “{m.note}”
-                  </p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
-                    <span className="font-script text-base text-stone-600">
-                      {m.author ? `— ${m.author}` : "— a friend"}
-                    </span>
-                    <time>{formatDate(m.createdAt)}</time>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => remove(m.id)}
-                  disabled={busy === m.id}
-                  className="no-print absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition bg-white/90 hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-full px-3 py-1 text-xs"
-                  title="Delete"
+            {filtered.map((m) => {
+              const isNew = now - m.createdAt < NEW_THRESHOLD_MS;
+              const isHidden = !!m.hidden;
+              return (
+                <article
+                  key={m.id}
+                  className={`print-card mb-6 break-inside-avoid bg-white rounded-2xl shadow-sm border overflow-hidden group relative ${
+                    isHidden ? "opacity-50 border-stone-300" : "border-stone-200"
+                  }`}
                 >
-                  {busy === m.id ? "…" : "Delete"}
-                </button>
-              </article>
-            ))}
+                  {isNew && (
+                    <span className="no-print absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] tracking-[0.2em] uppercase font-medium shadow">
+                      New
+                    </span>
+                  )}
+                  {isHidden && (
+                    <span className="no-print absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-stone-800 text-white text-[10px] tracking-[0.2em] uppercase font-medium shadow">
+                      Hidden
+                    </span>
+                  )}
+
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.imageUrl}
+                    alt=""
+                    loading="lazy"
+                    onClick={() => setLightbox(m)}
+                    className="w-full h-auto block cursor-zoom-in"
+                  />
+                  <div className="p-4">
+                    <p className="font-serif text-[17px] leading-snug text-stone-800 whitespace-pre-wrap">
+                      “{m.note}”
+                    </p>
+                    <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
+                      <span className="font-script text-base text-stone-600">
+                        {m.author ? `— ${m.author}` : "— a friend"}
+                      </span>
+                      <time>{formatDate(m.createdAt)}</time>
+                    </div>
+                  </div>
+
+                  <div className="no-print absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition flex gap-1">
+                    <button
+                      onClick={() => toggleHidden(m)}
+                      disabled={busy === m.id}
+                      className="bg-white/90 hover:bg-stone-100 text-stone-700 border border-stone-300 rounded-full px-3 py-1 text-xs"
+                      title={isHidden ? "Show on TV again" : "Hide from TV"}
+                    >
+                      {busy === m.id ? "…" : isHidden ? "Unhide" : "Hide"}
+                    </button>
+                    <button
+                      onClick={() => remove(m.id)}
+                      disabled={busy === m.id}
+                      className="bg-white/90 hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-full px-3 py-1 text-xs"
+                      title="Delete forever"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       )}
 
-      {/* Print layout — keepsake book pages: 2 per row, generous spacing */}
+      {/* Print layout */}
       {view === "print" && messages.length > 0 && (
         <section className="max-w-5xl mx-auto px-6 py-10">
           <div className="text-center mb-10 print-cover">
             <p className="font-script text-3xl text-stone-500">a warm goodbye for</p>
             <h2 className="font-serif text-6xl text-stone-800">Lidiya</h2>
             <p className="mt-3 text-stone-500 italic">
-              messages from the people who love you · {messages.length} in all
+              messages from the people who love you · {filtered.length} in all
             </p>
           </div>
 
@@ -228,6 +353,41 @@ export default function AdminGallery({
       <footer className="no-print py-10 text-center text-xs text-stone-400 font-script text-sm">
         made with love · for Lidiya
       </footer>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          className="no-print fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6 cursor-zoom-out"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-5xl w-full max-h-full flex flex-col items-center"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightbox.imageUrl}
+              alt=""
+              className="max-h-[75vh] w-auto rounded-lg shadow-2xl"
+            />
+            <div className="mt-4 max-w-2xl text-center text-white">
+              <p className="font-serif italic text-xl leading-snug">
+                “{lightbox.note}”
+              </p>
+              <p className="mt-2 font-script text-lg text-amber-200">
+                {lightbox.author ? `— ${lightbox.author}` : "— a friend"}
+              </p>
+            </div>
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute top-2 right-2 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
