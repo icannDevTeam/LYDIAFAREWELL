@@ -227,6 +227,9 @@ export default function AdminGallery({
           <a href="/display" target="_blank" rel="noreferrer" className="text-amber-700 hover:underline">
             Open TV display
           </a>
+          <a href="/qr" target="_blank" rel="noreferrer" className="text-amber-700 hover:underline">
+            Open QR poster
+          </a>
           <a href="/upload" target="_blank" rel="noreferrer" className="text-amber-700 hover:underline">
             Open upload page
           </a>
