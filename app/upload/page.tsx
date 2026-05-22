@@ -106,25 +106,6 @@ export default function UploadPage() {
           Leave her a photo and a few words.
           <br className="hidden sm:block" /> They will live on the wall, and later in a keepsake book.
         </p>
-
-        {/* How it works — words, no icons */}
-        <ol className="mt-7 grid grid-cols-3 gap-3 text-left">
-          {[
-            { n: "One",   t: "Add a photo" },
-            { n: "Two",   t: "Write a note" },
-            { n: "Three", t: "It joins the wall" },
-          ].map((s) => (
-            <li
-              key={s.n}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3"
-            >
-              <p className="text-[10px] tracking-[0.25em] uppercase text-sunset-300/70">
-                {s.n}
-              </p>
-              <p className="mt-1 text-sm text-sunset-50 leading-snug">{s.t}</p>
-            </li>
-          ))}
-        </ol>
       </header>
 
       {status === "success" ? (
@@ -154,30 +135,62 @@ export default function UploadPage() {
               Photo
             </label>
 
-            {/* Compact preview only when a photo is picked */}
-            {preview && (
-              <div className="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-2.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview}
-                  alt="preview"
-                  className="w-14 h-14 rounded-lg object-cover border border-white/10"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-serif italic text-sunset-50 leading-tight">
-                    Photo ready
-                  </p>
-                  <p className="text-[11px] text-sunset-100/55 tracking-wide truncate">
-                    {file?.name || "Tap a button below to replace"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setFile(null); setPreview(null); }}
-                  className="text-[10px] tracking-[0.25em] uppercase text-sunset-100/60 hover:text-sunset-50 px-2 py-1"
+            {/* Full square preview — uncropped (object-contain) so users see exactly what will appear on the wall */}
+            {preview ? (
+              <div className="mb-3">
+                <div
+                  className="relative w-full aspect-square rounded-2xl overflow-hidden border border-white/10"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse at center, rgba(255,176,107,0.10), rgba(0,0,0,0.35) 70%)",
+                  }}
                 >
-                  Remove
-                </button>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={preview}
+                    alt="Your photo preview"
+                    className="absolute inset-0 w-full h-full object-contain"
+                  />
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      boxShadow: "inset 0 0 60px rgba(0,0,0,0.45)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setFile(null); setPreview(null); }}
+                    className="absolute top-2.5 right-2.5 text-[10px] tracking-[0.25em] uppercase text-white/90 hover:text-white bg-black/45 backdrop-blur px-3 py-1.5 rounded-full border border-white/15"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] text-sunset-100/55 tracking-wide text-center font-serif italic">
+                  This is how it will appear on the wall
+                </p>
+              </div>
+            ) : (
+              <div
+                className="mb-3 w-full aspect-square rounded-2xl border border-dashed border-white/15 flex flex-col items-center justify-center text-center px-6"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, rgba(255,176,107,0.07), rgba(0,0,0,0.25) 70%)",
+                }}
+              >
+                <div className="w-12 h-12 rounded-full border border-white/15 flex items-center justify-center mb-3">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-sunset-200/70">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <circle cx="9" cy="11" r="2" />
+                    <path d="M21 17l-5-5-8 8" />
+                  </svg>
+                </div>
+                <p className="font-serif italic text-sunset-50 text-[15px]">
+                  Your photo will appear here
+                </p>
+                <p className="mt-1 text-[11px] tracking-wide text-sunset-100/55">
+                  Choose from gallery or take a new one below
+                </p>
               </div>
             )}
 
