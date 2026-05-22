@@ -95,63 +95,63 @@ export default function UploadPage() {
       <div aria-hidden className="film-grain pointer-events-none fixed inset-0 -z-10 opacity-40" />
 
       {/* Hero */}
-      <header className="text-center mb-7 pt-2">
-        <div className="relative inline-block mb-4">
-          <div className="polaroid inline-block -rotate-3 shadow-2xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/lydia-selfie.jpeg"
-              alt="Lidiya"
-              className="w-28 h-28 object-cover rounded-sm"
-            />
-            <p className="font-script text-stone-700 text-center mt-1 text-lg">Lidiya</p>
-          </div>
-          <span className="absolute -top-2 -right-3 text-2xl rotate-12">💛</span>
-        </div>
-
-        <p className="font-script text-2xl text-sunset-200">A warm farewell for</p>
-        <h1 className="font-serif text-5xl text-shimmer leading-tight">Lidiya</h1>
-        <p className="mt-3 text-sunset-100/85 text-[15px] max-w-sm mx-auto leading-relaxed">
-          Snap a photo with her, jot a little note,
-          <br className="hidden sm:block" /> and watch it land on the big screen.
+      <header className="text-center mb-8 pt-2">
+        <p className="text-[11px] tracking-[0.4em] uppercase text-sunset-200/70">
+          A farewell celebration
+        </p>
+        <h1 className="mt-3 font-serif italic text-5xl text-shimmer leading-[1.05]">
+          For Lidiya
+        </h1>
+        <div className="mx-auto mt-4 h-px w-24 bg-gradient-to-r from-transparent via-sunset-300/60 to-transparent" />
+        <p className="mt-5 text-sunset-100/80 text-[15px] max-w-sm mx-auto leading-relaxed font-serif italic">
+          Leave her a photo and a few words.
+          <br className="hidden sm:block" /> They will live on the wall, and later in a keepsake book.
         </p>
 
-        {/* How it works */}
-        <div className="mt-5 grid grid-cols-3 gap-2 text-[11px] text-sunset-100/70">
-          <div className="rounded-xl bg-white/5 border border-white/10 px-2 py-2">
-            <div className="text-lg">📸</div>
-            <div className="mt-0.5">Add a photo</div>
-          </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 px-2 py-2">
-            <div className="text-lg">💌</div>
-            <div className="mt-0.5">Write a note</div>
-          </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 px-2 py-2">
-            <div className="text-lg">✨</div>
-            <div className="mt-0.5">See it on TV</div>
-          </div>
-        </div>
+        {/* How it works — words, no icons */}
+        <ol className="mt-7 grid grid-cols-3 gap-3 text-left">
+          {[
+            { n: "One",   t: "Add a photo" },
+            { n: "Two",   t: "Write a note" },
+            { n: "Three", t: "It joins the wall" },
+          ].map((s) => (
+            <li
+              key={s.n}
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3"
+            >
+              <p className="text-[10px] tracking-[0.25em] uppercase text-sunset-300/70">
+                {s.n}
+              </p>
+              <p className="mt-1 text-sm text-sunset-50 leading-snug">{s.t}</p>
+            </li>
+          ))}
+        </ol>
       </header>
 
       {status === "success" ? (
-        <div className="glass rounded-3xl p-8 text-center">
-          <div className="text-5xl mb-3">✨</div>
-          <h2 className="font-serif text-3xl mb-2 text-shimmer">Sent with love</h2>
-          <p className="text-sunset-100/90 mb-6">
-            Keep an eye on the screen — your moment is on its way.
+        <div className="glass rounded-3xl p-10 text-center">
+          <p className="text-[11px] tracking-[0.35em] uppercase text-sunset-200/70">
+            Thank you
+          </p>
+          <h2 className="mt-3 font-serif italic text-3xl text-shimmer">
+            With love, received
+          </h2>
+          <div className="mx-auto mt-4 h-px w-20 bg-gradient-to-r from-transparent via-sunset-300/60 to-transparent" />
+          <p className="mt-5 text-sunset-100/85 mb-7 font-serif italic">
+            Watch the wall — your moment is on its way.
           </p>
           <button
             onClick={() => setStatus("idle")}
-            className="px-6 py-3 rounded-full bg-sunset-500 hover:bg-sunset-600 text-white font-medium transition shadow-lg"
+            className="px-7 py-3 rounded-full bg-sunset-500 hover:bg-sunset-600 text-white font-medium tracking-wide transition shadow-lg"
           >
-            Share another 💛
+            Share another
           </button>
         </div>
       ) : (
-        <form onSubmit={submit} className="glass rounded-3xl p-6 space-y-5">
+        <form onSubmit={submit} className="glass rounded-3xl p-6 space-y-6">
           {/* Photo */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-sunset-100">
+            <label className="block text-[11px] tracking-[0.3em] uppercase mb-3 text-sunset-200/80">
               Photo
             </label>
             <div
@@ -163,9 +163,12 @@ export default function UploadPage() {
                 <img src={preview} alt="preview" className="w-full h-full object-cover" />
               ) : (
                 <div className="text-center px-6">
-                  <div className="text-4xl mb-2">📸</div>
-                  <p className="text-sunset-100/90">Tap to pick a photo</p>
-                  <p className="text-xs text-sunset-100/60 mt-1">Selfies welcome!</p>
+                  <p className="font-serif italic text-xl text-sunset-100">
+                    Choose a photo
+                  </p>
+                  <p className="mt-2 text-xs text-sunset-100/60 tracking-wide">
+                    Selfies welcome
+                  </p>
                 </div>
               )}
             </div>
@@ -175,16 +178,16 @@ export default function UploadPage() {
               <button
                 type="button"
                 onClick={() => libraryInput.current?.click()}
-                className="py-3 rounded-xl bg-white/10 hover:bg-white/20 text-sunset-50 text-sm font-medium transition"
+                className="py-3 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] text-sunset-50 text-sm font-medium tracking-wide transition"
               >
-                🖼️ Choose from gallery
+                From gallery
               </button>
               <button
                 type="button"
                 onClick={() => cameraInput.current?.click()}
-                className="py-3 rounded-xl bg-white/10 hover:bg-white/20 text-sunset-50 text-sm font-medium transition"
+                className="py-3 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] text-sunset-50 text-sm font-medium tracking-wide transition"
               >
-                📷 Take a photo
+                Take a photo
               </button>
             </div>
 
@@ -209,16 +212,16 @@ export default function UploadPage() {
 
           {/* Note */}
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium text-sunset-100">
-                Your message for Lidiya
+            <div className="flex justify-between items-center mb-3">
+              <label className="text-[11px] tracking-[0.3em] uppercase text-sunset-200/80">
+                Your message
               </label>
               <button
                 type="button"
                 onClick={pickSuggestion}
-                className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition"
+                className="text-[11px] tracking-wider uppercase px-3 py-1 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.1] transition"
               >
-                ✨ Suggest words
+                Suggest words
               </button>
             </div>
             <textarea
@@ -226,30 +229,30 @@ export default function UploadPage() {
               onChange={(e) => setNote(e.target.value)}
               rows={4}
               maxLength={280}
-              placeholder="Write something warm…"
-              className="w-full rounded-xl bg-black/30 border border-white/10 p-3 text-sunset-50 placeholder:text-sunset-100/40 focus:outline-none focus:border-sunset-300"
+              placeholder="A few warm words for Lidiya…"
+              className="w-full rounded-xl bg-black/30 border border-white/10 p-4 font-serif italic text-[17px] leading-relaxed text-sunset-50 placeholder:text-sunset-100/35 focus:outline-none focus:border-sunset-300"
             />
-            <p className="text-right text-xs text-sunset-100/50 mt-1">
-              {note.length}/280
+            <p className="text-right text-[11px] text-sunset-100/40 mt-1 tracking-wider">
+              {note.length} / 280
             </p>
           </div>
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-sunset-100">
-              Your name <span className="text-sunset-100/50">(optional)</span>
+            <label className="block text-[11px] tracking-[0.3em] uppercase mb-3 text-sunset-200/80">
+              Your name <span className="text-sunset-100/40 normal-case tracking-normal">(optional)</span>
             </label>
             <input
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
               maxLength={40}
               placeholder="From…"
-              className="w-full rounded-xl bg-black/30 border border-white/10 p-3 text-sunset-50 placeholder:text-sunset-100/40 focus:outline-none focus:border-sunset-300"
+              className="w-full rounded-xl bg-black/30 border border-white/10 p-3 text-sunset-50 placeholder:text-sunset-100/35 focus:outline-none focus:border-sunset-300"
             />
           </div>
 
           {error && (
-            <div className="rounded-xl bg-red-500/20 border border-red-400/30 p-3 text-sm text-red-100">
+            <div className="rounded-xl bg-red-500/15 border border-red-400/30 p-3 text-sm text-red-100">
               {error}
             </div>
           )}
@@ -257,15 +260,18 @@ export default function UploadPage() {
           <button
             type="submit"
             disabled={status === "uploading"}
-            className="w-full py-4 rounded-full bg-gradient-to-r from-sunset-500 to-sunset-600 hover:opacity-95 text-white font-semibold transition shadow-lg disabled:opacity-60"
+            className="w-full py-4 rounded-full bg-gradient-to-r from-sunset-500 to-sunset-600 hover:opacity-95 text-white font-medium tracking-[0.2em] uppercase text-sm transition shadow-lg disabled:opacity-60"
           >
-            {status === "uploading" ? "Sending…" : "Send to the screen 💛"}
+            {status === "uploading" ? "Sending" : "Submit"}
           </button>
         </form>
       )}
 
-      <footer className="mt-8 mb-4 text-center text-xs text-sunset-100/40 font-script text-sm">
-        made with love · for Lidiya
+      <footer className="mt-10 mb-4 text-center">
+        <div className="mx-auto h-px w-16 bg-gradient-to-r from-transparent via-sunset-300/40 to-transparent" />
+        <p className="mt-3 text-[10px] tracking-[0.35em] uppercase text-sunset-100/40">
+          With love · for Lidiya
+        </p>
       </footer>
       <InstallPrompt />
     </main>

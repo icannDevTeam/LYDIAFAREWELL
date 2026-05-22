@@ -1,31 +1,36 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { collection, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { getDb, COLLECTION, isFirebaseConfigured } from "@/lib/firebase";
 import type { Message } from "@/lib/types";
 
 // --- Scene system -----------------------------------------------------------
-// Each scene picks a layout / animation style. We rotate through them so the
-// display feels alive rather than repetitive. Scenes with higher minMessages
-// are skipped when there aren't enough memories yet.
 
-type SceneType = "hero" | "kenburns" | "polaroidStack" | "collagePop" | "mosaic";
+type SceneType =
+  | "hero"
+  | "kenburns"
+  | "quote"
+  | "polaroidStack"
+  | "collagePop"
+  | "mosaic";
 
 type Scene = {
   type: SceneType;
+  label: string;
   minMessages: number;
   durationMs: number;
   weight: number;
 };
 
 const SCENES: Scene[] = [
-  { type: "hero",          minMessages: 1, durationMs: 8000,  weight: 3 },
-  { type: "kenburns",      minMessages: 1, durationMs: 9000,  weight: 2 },
-  { type: "polaroidStack", minMessages: 3, durationMs: 10000, weight: 2 },
-  { type: "collagePop",    minMessages: 5, durationMs: 11000, weight: 2 },
-  { type: "mosaic",        minMessages: 6, durationMs: 10000, weight: 1 },
+  { type: "hero",          label: "Hero",     minMessages: 1, durationMs: 8000,  weight: 3 },
+  { type: "kenburns",      label: "Pan",      minMessages: 1, durationMs: 9000,  weight: 2 },
+  { type: "quote",         label: "Quote",    minMessages: 1, durationMs: 10000, weight: 2 },
+  { type: "polaroidStack", label: "Stack",    minMessages: 3, durationMs: 10000, weight: 2 },
+  { type: "collagePop",    label: "Collage",  minMessages: 5, durationMs: 11000, weight: 2 },
+  { type: "mosaic",        label: "Mosaic",   minMessages: 6, durationMs: 10000, weight: 1 },
 ];
 
 const IDLE_LINES = [
@@ -39,18 +44,25 @@ const IDLE_LINES = [
   "Here's to every chapter still to come.",
 ];
 
-function pickScene(prev: SceneType | null, available: number): Scene {
+function pickScene(prev: SceneType | null, available: number, focus?: Message): Scene {
   const candidates = SCENES.filter(
-    (s) => s.minMessages <= available && s.type !== prev
+    (s) => s.minMessages <= available && s.type !== prev,
   );
-  const pool = candidates.length
+  let pool = candidates.length
     ? candidates
     : SCENES.filter((s) => s.minMessages <= available);
-  const total = pool.reduce((a, s) => a + s.weight, 0);
+
+  // Bias: if the focus message has a long note, favour the quote scene.
+  const isLong = !!focus && focus.note.length >= 120;
+  const weighted = pool.map((s) => ({
+    s,
+    w: s.type === "quote" ? (isLong ? s.weight * 3 : s.weight * 0.5) : s.weight,
+  }));
+  const total = weighted.reduce((a, x) => a + x.w, 0);
   let r = Math.random() * total;
-  for (const s of pool) {
-    r -= s.weight;
-    if (r <= 0) return s;
+  for (const x of weighted) {
+    r -= x.w;
+    if (r <= 0) return x.s;
   }
   return pool[0];
 }
@@ -73,6 +85,8 @@ export default function DisplayPage() {
   const [scene, setScene] = useState<Scene>(SCENES[0]);
   const [idleLine, setIdleLine] = useState(0);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [toast, setToast] = useState<Message | null>(null);
   const prevSceneType = useRef<SceneType | null>(null);
 
   // Subscribe to Firestore
@@ -103,7 +117,7 @@ export default function DisplayPage() {
         (err) => {
           console.error(err);
           setConfigError(err.message);
-        }
+        },
       );
       return () => unsub();
     } catch (e: any) {
@@ -111,29 +125,33 @@ export default function DisplayPage() {
     }
   }, []);
 
-  // Scene scheduler: pick a scene each tick, advance focus when timer expires.
+  // Scene scheduler
   useEffect(() => {
-    if (messages.length === 0) return;
-    const next = pickScene(prevSceneType.current, messages.length);
+    if (messages.length === 0 || paused) return;
+    const focus = messages[focusIdx];
+    const next = pickScene(prevSceneType.current, messages.length, focus);
     prevSceneType.current = next.type;
     setScene(next);
-
     const t = setTimeout(() => {
       setFocusIdx((i) => (i + 1) % messages.length);
       setSceneIdx((i) => i + 1);
     }, next.durationMs);
     return () => clearTimeout(t);
-  }, [sceneIdx, messages.length]);
+  }, [sceneIdx, messages.length, paused, focusIdx]);
 
-  // When a brand-new message arrives, jump to it immediately
+  // New message arrives → jump to it + show toast
   const prevCount = useRef(0);
   useEffect(() => {
     if (messages.length > prevCount.current && prevCount.current > 0) {
+      const fresh = messages[messages.length - 1];
       setFocusIdx(messages.length - 1);
       setSceneIdx((i) => i + 1);
+      setToast(fresh);
+      const t = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(t);
     }
     prevCount.current = messages.length;
-  }, [messages.length]);
+  }, [messages]);
 
   // Idle line rotation
   useEffect(() => {
@@ -142,22 +160,62 @@ export default function DisplayPage() {
     return () => clearInterval(t);
   }, [messages.length]);
 
+  // Hotkeys: → next · ← previous · space pause/resume · f fullscreen
+  const next = useCallback(() => {
+    if (messages.length === 0) return;
+    setFocusIdx((i) => (i + 1) % messages.length);
+    setSceneIdx((i) => i + 1);
+  }, [messages.length]);
+  const prev = useCallback(() => {
+    if (messages.length === 0) return;
+    setFocusIdx((i) => (i - 1 + messages.length) % messages.length);
+    setSceneIdx((i) => i + 1);
+  }, [messages.length]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowRight") next();
+      else if (e.key === "ArrowLeft") prev();
+      else if (e.key === " ") {
+        e.preventDefault();
+        setPaused((p) => !p);
+      } else if (e.key.toLowerCase() === "f") {
+        if (document.fullscreenElement) document.exitFullscreen?.();
+        else document.documentElement.requestFullscreen?.();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [next, prev]);
+
   const focus = messages[focusIdx];
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-black">
-      {/* Warm gradient backdrop */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#2a0f0a] via-[#6b2d1a] to-[#c2410c]" />
-      <div className="absolute inset-0 particles" />
+      {/* Animated warm gradient backdrop */}
+      <div className="absolute inset-0 bg-animated-warm" />
+
+      {/* Bokeh + particles ambient layers */}
+      <BokehLayer />
+      <ParticleLayer />
 
       {/* Header */}
       <div className="absolute top-6 left-8 z-30 flex items-baseline gap-3">
-        <span className="font-script text-2xl text-sunset-200/80">farewell,</span>
-        <span className="font-serif text-3xl text-shimmer">Lidiya</span>
+        <span className="text-[11px] tracking-[0.35em] uppercase text-sunset-200/70">
+          Farewell
+        </span>
+        <span className="font-serif italic text-3xl text-shimmer">Lidiya</span>
       </div>
       {messages.length > 0 && (
-        <div className="absolute top-6 right-8 z-30 text-sunset-100/60 text-sm font-medium tracking-wide">
-          {focusIdx + 1} / {messages.length} · {messages.length} memories shared
+        <div className="absolute top-6 right-8 z-30 text-sunset-100/60 text-xs tracking-[0.25em] uppercase flex items-center gap-3">
+          <span>{focusIdx + 1} / {messages.length}</span>
+          <span className="opacity-40">·</span>
+          <span>{messages.length} memories</span>
+          {paused && (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-sunset-300/15 border border-sunset-300/30 text-sunset-200">
+              Paused
+            </span>
+          )}
         </div>
       )}
 
@@ -168,9 +226,12 @@ export default function DisplayPage() {
       {configError && (
         <div className="absolute inset-0 flex items-center justify-center z-40">
           <div className="glass rounded-3xl p-10 max-w-xl text-center">
-            <div className="text-4xl mb-3">⚙️</div>
-            <h2 className="font-serif text-2xl mb-2">Setup needed</h2>
-            <p className="text-sunset-100/80 text-sm">{configError}</p>
+            <p className="text-[11px] tracking-[0.35em] uppercase text-sunset-200/70">
+              Setup needed
+            </p>
+            <p className="mt-3 font-serif italic text-2xl text-sunset-50">
+              {configError}
+            </p>
           </div>
         </div>
       )}
@@ -191,13 +252,144 @@ export default function DisplayPage() {
         )}
       </AnimatePresence>
 
-      {/* Footer ribbon */}
+      {/* Just-uploaded toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute top-6 left-1/2 -translate-x-1/2 z-40"
+          >
+            <div className="glass rounded-full pl-2 pr-6 py-2 flex items-center gap-3 shadow-2xl border border-sunset-300/30">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={toast.imageUrl}
+                alt=""
+                className="w-9 h-9 rounded-full object-cover border border-white/30"
+              />
+              <div className="text-left">
+                <p className="text-[10px] tracking-[0.3em] uppercase text-sunset-200/80">
+                  Just arrived
+                </p>
+                <p className="font-serif italic text-sunset-50 leading-tight">
+                  {toast.author ? `From ${toast.author}` : "A new memory"}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer: scene dots + helper */}
       {messages.length > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 glass px-6 py-2 rounded-full text-sunset-100/85 text-sm">
-          scan the QR to add yours 💛
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            {SCENES.map((s) => {
+              const isActive = s.type === scene.type;
+              return (
+                <span
+                  key={s.type}
+                  className={`h-1.5 rounded-full transition-all duration-700 ${
+                    isActive
+                      ? "w-8 bg-sunset-200 shadow-[0_0_12px_rgba(253,186,116,0.5)]"
+                      : "w-1.5 bg-sunset-200/25"
+                  }`}
+                  aria-label={s.label}
+                />
+              );
+            })}
+          </div>
+          <p className="text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
+            With love · for Lidiya
+          </p>
         </div>
       )}
     </main>
+  );
+}
+
+// --- Ambient layers ---------------------------------------------------------
+
+function BokehLayer() {
+  const blobs = useMemo(
+    () => [
+      { w: 320, color: "rgba(212,165,90,0.18)",  top: "8%",  left: "4%",  d: 0 },
+      { w: 220, color: "rgba(248,200,220,0.14)", top: "62%", left: "82%", d: 2 },
+      { w: 280, color: "rgba(253,155,99,0.14)",  top: "70%", left: "28%", d: 4 },
+      { w: 180, color: "rgba(212,175,55,0.14)",  top: "26%", left: "70%", d: 6 },
+      { w: 240, color: "rgba(248,200,220,0.10)", top: "82%", left: "88%", d: 3 },
+      { w: 160, color: "rgba(253,155,99,0.14)",  top: "48%", left: "8%",  d: 5 },
+    ],
+    [],
+  );
+  return (
+    <div className="absolute inset-0 z-[1] pointer-events-none">
+      {blobs.map((b, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: b.w,
+            height: b.w,
+            top: b.top,
+            left: b.left,
+            background: b.color,
+            filter: "blur(40px)",
+          }}
+          animate={{
+            x: [0, 30, -20, 0],
+            y: [0, -20, 15, 0],
+            scale: [1, 1.1, 0.95, 1],
+          }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: b.d }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ParticleLayer() {
+  const particles = useMemo(() => {
+    return Array.from({ length: 18 }).map((_, i) => ({
+      i,
+      left: Math.random() * 100,
+      size: 2 + Math.random() * 3,
+      duration: 18 + Math.random() * 14,
+      delay: Math.random() * 12,
+      drift: (Math.random() - 0.5) * 80,
+    }));
+  }, []);
+  return (
+    <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
+      {particles.map((p) => (
+        <motion.span
+          key={p.i}
+          className="absolute rounded-full bg-sunset-200/50"
+          style={{
+            width: p.size,
+            height: p.size,
+            left: `${p.left}%`,
+            bottom: -20,
+            boxShadow: "0 0 6px rgba(253,186,116,0.6)",
+          }}
+          initial={{ y: 0, x: 0, opacity: 0 }}
+          animate={{
+            y: -window?.innerHeight - 40 || -1000,
+            x: p.drift,
+            opacity: [0, 0.9, 0.6, 0],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: "linear",
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -213,18 +405,13 @@ function SceneRenderer({
   all: Message[];
 }) {
   switch (scene.type) {
-    case "hero":
-      return <HeroScene message={focus} />;
-    case "kenburns":
-      return <KenBurnsScene message={focus} />;
-    case "polaroidStack":
-      return <PolaroidStackScene focus={focus} all={all} />;
-    case "collagePop":
-      return <CollagePopScene focus={focus} all={all} />;
-    case "mosaic":
-      return <MosaicScene focus={focus} all={all} />;
-    default:
-      return <HeroScene message={focus} />;
+    case "hero":          return <HeroScene message={focus} />;
+    case "kenburns":      return <KenBurnsScene message={focus} />;
+    case "quote":         return <QuoteScene message={focus} />;
+    case "polaroidStack": return <PolaroidStackScene focus={focus} all={all} />;
+    case "collagePop":    return <CollagePopScene focus={focus} all={all} />;
+    case "mosaic":        return <MosaicScene focus={focus} all={all} />;
+    default:              return <HeroScene message={focus} />;
   }
 }
 
@@ -234,6 +421,18 @@ function HeroScene({ message }: { message: Message }) {
   return (
     <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-12 gap-0 film-grain">
       <div className="md:col-span-7 relative overflow-hidden">
+        {/* Glow-breath aura behind the focal photo */}
+        <motion.div
+          aria-hidden
+          className="absolute -inset-10 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(253,186,116,0.25), transparent 60%)",
+            filter: "blur(40px)",
+          }}
+          animate={{ opacity: [0.4, 0.9, 0.4], scale: [1, 1.08, 1] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <motion.img
           src={message.imageUrl}
@@ -241,7 +440,7 @@ function HeroScene({ message }: { message: Message }) {
           initial={{ scale: 1.15 }}
           animate={{ scale: 1.0 }}
           transition={{ duration: 8, ease: "linear" }}
-          className="w-full h-full object-cover"
+          className="relative w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#2a0f0a]/70" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#2a0f0a]/60 via-transparent to-transparent" />
@@ -254,12 +453,19 @@ function HeroScene({ message }: { message: Message }) {
           transition={{ duration: 1.4, delay: 0.4, ease: "easeOut" }}
           className="relative z-10 max-w-md"
         >
-          <div className="font-script text-4xl text-sunset-200/80 mb-4">“</div>
-          <p className="font-serif text-3xl lg:text-4xl leading-snug text-sunset-50">
-            {message.note}
+          <div className="flex items-center gap-3 mb-5">
+            <span className="h-px w-10 bg-sunset-300/60" />
+            <span className="text-[10px] tracking-[0.35em] uppercase text-sunset-200/70">
+              A memory
+            </span>
+          </div>
+          <p className="font-serif italic text-3xl lg:text-4xl leading-snug text-sunset-50">
+            “{message.note}”
           </p>
           {message.author && (
-            <p className="mt-8 font-script text-3xl text-shimmer">— {message.author}</p>
+            <p className="mt-8 font-serif italic text-2xl text-shimmer">
+              — {message.author}
+            </p>
           )}
         </motion.div>
       </div>
@@ -298,13 +504,58 @@ function KenBurnsScene({ message }: { message: Message }) {
         transition={{ duration: 1.4, delay: 0.6, ease: "easeOut" }}
         className="absolute bottom-24 left-0 right-0 px-16 text-center max-w-5xl mx-auto"
       >
-        <p className="font-serif text-4xl lg:text-5xl leading-snug text-sunset-50 drop-shadow-lg">
+        <p className="font-serif italic text-4xl lg:text-5xl leading-snug text-sunset-50 drop-shadow-lg">
           “{message.note}”
         </p>
         {message.author && (
-          <p className="mt-6 font-script text-3xl text-shimmer">— {message.author}</p>
+          <p className="mt-6 font-serif italic text-3xl text-shimmer">
+            — {message.author}
+          </p>
         )}
       </motion.div>
+    </div>
+  );
+}
+
+// --- Scene: Quote (long-note showcase, side-by-side calm) -------------------
+
+function QuoteScene({ message }: { message: Message }) {
+  return (
+    <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 film-grain">
+      <div className="relative overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <motion.img
+          src={message.imageUrl}
+          alt=""
+          initial={{ scale: 1.08 }}
+          animate={{ scale: 1.0 }}
+          transition={{ duration: 10, ease: "linear" }}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1a0905]/40" />
+      </div>
+      <div className="relative flex items-center px-16 py-12">
+        <div className="absolute inset-0 bg-gradient-to-l from-[#1a0905]/95 to-[#2a0f0a]/70" />
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.4, delay: 0.4, ease: "easeOut" }}
+          className="relative z-10 max-w-xl"
+        >
+          <div className="font-serif text-[7rem] leading-none text-sunset-300/30 -mb-6 select-none">
+            “
+          </div>
+          <p className="font-serif italic text-2xl lg:text-[1.85rem] leading-relaxed text-sunset-50">
+            {message.note}
+          </p>
+          <div className="mt-8 flex items-center gap-4">
+            <span className="h-px w-12 bg-sunset-300/60" />
+            <p className="font-serif italic text-2xl text-shimmer">
+              {message.author || "a friend"}
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
@@ -321,12 +572,11 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
         y: (Math.random() - 0.5) * 120,
         delay: 0.1 + i * 0.15,
       })),
-    [extras]
+    [extras],
   );
 
   return (
     <div className="absolute inset-0 flex items-center justify-center film-grain">
-      {/* Background polaroids dropping in */}
       <div className="absolute inset-0 flex items-center justify-center">
         {extras.map((m, i) => (
           <motion.div
@@ -343,7 +593,6 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
         ))}
       </div>
 
-      {/* Focus polaroid lands left of centre */}
       <motion.div
         initial={{ opacity: 0, scale: 0.4, rotate: -10, y: -300 }}
         animate={{ opacity: 1, scale: 1, rotate: -2, y: 0 }}
@@ -361,10 +610,16 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
         transition={{ duration: 1.2, delay: 1.4, ease: "easeOut" }}
         className="relative z-10 ml-16 max-w-md"
       >
-        <div className="font-script text-4xl text-sunset-200/80 mb-3">“</div>
-        <p className="font-serif text-3xl leading-snug text-sunset-50">{focus.note}</p>
+        <span className="text-[10px] tracking-[0.35em] uppercase text-sunset-200/70">
+          A memory
+        </span>
+        <p className="mt-4 font-serif italic text-3xl leading-snug text-sunset-50">
+          “{focus.note}”
+        </p>
         {focus.author && (
-          <p className="mt-6 font-script text-3xl text-shimmer">— {focus.author}</p>
+          <p className="mt-6 font-serif italic text-3xl text-shimmer">
+            — {focus.author}
+          </p>
         )}
       </motion.div>
     </div>
@@ -421,7 +676,6 @@ function CollagePopScene({ focus, all }: { focus: Message; all: Message[] }) {
         </motion.div>
       ))}
 
-      {/* Focus card centered, glowing */}
       <motion.div
         initial={{ opacity: 0, scale: 0.6 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -433,9 +687,13 @@ function CollagePopScene({ focus, all }: { focus: Message; all: Message[] }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={focus.imageUrl} alt="" className="w-full aspect-[4/5] object-cover" />
           <div className="p-6 bg-gradient-to-b from-[#2a0f0a]/80 to-[#1a0905]/95">
-            <p className="font-serif text-xl leading-snug text-sunset-50">“{focus.note}”</p>
+            <p className="font-serif italic text-xl leading-snug text-sunset-50">
+              “{focus.note}”
+            </p>
             {focus.author && (
-              <p className="mt-3 font-script text-2xl text-shimmer">— {focus.author}</p>
+              <p className="mt-3 font-serif italic text-2xl text-shimmer">
+                — {focus.author}
+              </p>
             )}
           </div>
         </div>
@@ -492,9 +750,13 @@ function MosaicScene({ focus, all }: { focus: Message; all: Message[] }) {
         transition={{ duration: 1.0, delay: 1.4, ease: "easeOut" }}
         className="absolute left-1/2 bottom-20 -translate-x-1/2 z-30 glass rounded-2xl px-8 py-5 max-w-3xl text-center"
       >
-        <p className="font-serif text-2xl leading-snug text-sunset-50">“{focus.note}”</p>
+        <p className="font-serif italic text-2xl leading-snug text-sunset-50">
+          “{focus.note}”
+        </p>
         {focus.author && (
-          <p className="mt-2 font-script text-2xl text-shimmer">— {focus.author}</p>
+          <p className="mt-2 font-serif italic text-2xl text-shimmer">
+            — {focus.author}
+          </p>
         )}
       </motion.div>
     </div>
@@ -506,7 +768,6 @@ function MosaicScene({ focus, all }: { focus: Message; all: Message[] }) {
 function IdleState({ lineIndex }: { lineIndex: number }) {
   return (
     <div className="absolute inset-0 z-20 overflow-hidden">
-      {/* Group portrait — full bleed, slow Ken Burns */}
       <motion.div
         initial={{ scale: 1.0 }}
         animate={{ scale: 1.12 }}
@@ -516,17 +777,15 @@ function IdleState({ lineIndex }: { lineIndex: number }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/lydia-group.jpeg"
-          alt="Lydia and friends"
+          alt="Lidiya and friends"
           className="absolute inset-0 w-full h-full object-cover"
         />
       </motion.div>
 
-      {/* Warm gradient wash so text stays legible */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0905]/55 via-[#2a0f0a]/30 to-[#1a0905]/90" />
       <div className="absolute inset-0 bg-gradient-to-tr from-[#6b2d1a]/40 via-transparent to-[#c2410c]/30" />
       <div className="absolute inset-0 film-grain" />
 
-      {/* Selfie polaroid pinned top-right, gently swaying */}
       <motion.div
         initial={{ opacity: 0, y: -30, rotate: 6 }}
         animate={{ opacity: 1, y: 0, rotate: 4 }}
@@ -544,18 +803,17 @@ function IdleState({ lineIndex }: { lineIndex: number }) {
         </motion.div>
       </motion.div>
 
-      {/* Centerpiece text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-20">
         <motion.div
           initial={{ scale: 0.92, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 2.4, ease: "easeOut" }}
         >
-          <p className="font-script text-4xl md:text-6xl text-sunset-200 mb-4 animate-float drop-shadow-lg">
-            a warm goodbye for
+          <p className="text-[11px] md:text-sm tracking-[0.45em] uppercase text-sunset-200/80 mb-6">
+            A farewell celebration
           </p>
-          <h1 className="font-serif text-[8rem] md:text-[12rem] leading-none font-semibold text-shimmer drop-shadow-2xl">
-            Lydia
+          <h1 className="font-serif italic text-[8rem] md:text-[12rem] leading-none font-medium text-shimmer drop-shadow-2xl">
+            Lidiya
           </h1>
         </motion.div>
 
@@ -567,7 +825,7 @@ function IdleState({ lineIndex }: { lineIndex: number }) {
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -18, filter: "blur(6px)" }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-              className="font-serif text-2xl md:text-4xl text-sunset-50 italic max-w-3xl drop-shadow-lg"
+              className="font-serif italic text-2xl md:text-4xl text-sunset-50 max-w-3xl drop-shadow-lg"
             >
               {IDLE_LINES[lineIndex]}
             </motion.p>
