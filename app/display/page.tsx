@@ -32,8 +32,11 @@ const IDLE_LINES = [
   "Some friendships cross oceans…",
   "…and never lose their warmth.",
   "Tonight, we celebrate Lydia.",
-  "Share a photo. Share a memory.",
-  "Scan the QR code to begin.",
+  "Years of laughter. A lifetime of memories.",
+  "Sunshine, even on the cloudy days.",
+  "The friend who feels like home.",
+  "Distance changes nothing. Love stays.",
+  "Here's to every chapter still to come.",
 ];
 
 function pickScene(prev: SceneType | null, available: number): Scene {
@@ -135,7 +138,7 @@ export default function DisplayPage() {
   // Idle line rotation
   useEffect(() => {
     if (messages.length > 0) return;
-    const t = setInterval(() => setIdleLine((i) => (i + 1) % IDLE_LINES.length), 4500);
+    const t = setInterval(() => setIdleLine((i) => (i + 1) % IDLE_LINES.length), 6000);
     return () => clearInterval(t);
   }, [messages.length]);
 
@@ -502,37 +505,74 @@ function MosaicScene({ focus, all }: { focus: Message; all: Message[] }) {
 
 function IdleState({ lineIndex }: { lineIndex: number }) {
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-8">
+    <div className="absolute inset-0 z-20 overflow-hidden">
+      {/* Group portrait — full bleed, slow Ken Burns */}
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 2 }}
+        initial={{ scale: 1.0 }}
+        animate={{ scale: 1.12 }}
+        transition={{ duration: 22, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+        className="absolute inset-0"
       >
-        <p className="font-script text-5xl text-sunset-200 mb-4 animate-float">
-          a warm goodbye for
-        </p>
-        <h1 className="font-serif text-[10rem] leading-none font-semibold text-shimmer">
-          Lydia
-        </h1>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/lydia-group.jpeg"
+          alt="Lydia and friends"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
       </motion.div>
 
-      <div className="mt-16 h-16">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={lineIndex}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 1.2 }}
-            className="font-serif text-3xl text-sunset-100/90 italic"
-          >
-            {IDLE_LINES[lineIndex]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
+      {/* Warm gradient wash so text stays legible */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0905]/55 via-[#2a0f0a]/30 to-[#1a0905]/90" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#6b2d1a]/40 via-transparent to-[#c2410c]/30" />
+      <div className="absolute inset-0 film-grain" />
 
-      <div className="mt-12 glass rounded-full px-6 py-3 text-sunset-100/85 text-sm tracking-wider">
-        waiting for the first memory…
+      {/* Selfie polaroid pinned top-right, gently swaying */}
+      <motion.div
+        initial={{ opacity: 0, y: -30, rotate: 6 }}
+        animate={{ opacity: 1, y: 0, rotate: 4 }}
+        transition={{ duration: 2, ease: "easeOut" }}
+        className="absolute top-10 right-12 z-30 hidden md:block"
+      >
+        <motion.div
+          animate={{ rotate: [4, 6, 4] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          className="polaroid"
+          style={{ width: 220, height: 270 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/lydia-selfie.jpeg" alt="" />
+        </motion.div>
+      </motion.div>
+
+      {/* Centerpiece text */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-20">
+        <motion.div
+          initial={{ scale: 0.92, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 2.4, ease: "easeOut" }}
+        >
+          <p className="font-script text-4xl md:text-6xl text-sunset-200 mb-4 animate-float drop-shadow-lg">
+            a warm goodbye for
+          </p>
+          <h1 className="font-serif text-[8rem] md:text-[12rem] leading-none font-semibold text-shimmer drop-shadow-2xl">
+            Lydia
+          </h1>
+        </motion.div>
+
+        <div className="mt-12 md:mt-16 h-20 flex items-center">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={lineIndex}
+              initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -18, filter: "blur(6px)" }}
+              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+              className="font-serif text-2xl md:text-4xl text-sunset-50 italic max-w-3xl drop-shadow-lg"
+            >
+              {IDLE_LINES[lineIndex]}
+            </motion.p>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
