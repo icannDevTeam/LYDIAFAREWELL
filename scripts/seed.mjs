@@ -51,7 +51,7 @@ const COLLECTION = "messages";
 const samples = [
   {
     imageUrl: "https://picsum.photos/seed/lydia-1/1200/1500",
-    note: "Lydia, you brought so much light into our days — fly home with all our love. 💛",
+    note: "Lidiya, you brought so much light into our days — fly home with all our love. 💛",
     author: "Amara",
   },
   {
@@ -81,7 +81,7 @@ const samples = [
   },
   {
     imageUrl: "https://picsum.photos/seed/lydia-7/1200/1500",
-    note: "Keep shining, Lydia. The world is luckier with you in it. ✨",
+    note: "Keep shining, Lidiya. The world is luckier with you in it. ✨",
     author: "Noor",
   },
   {
