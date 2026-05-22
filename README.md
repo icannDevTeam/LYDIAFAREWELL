@@ -13,7 +13,7 @@ Built with **Next.js 14 (App Router) + Firebase (Firestore + Storage) + Tailwind
 ## 1. Setup
 
 ```bash
-cd lydia-farewell
+cd lidiya-farewell
 npm install
 cp .env.local.example .env.local
 ```
@@ -76,7 +76,7 @@ npm run dev
 npx vercel
 ```
 
-Add the same env vars in the Vercel dashboard. Set `NEXT_PUBLIC_SITE_URL` to your final URL (e.g. `https://lydia-farewell.vercel.app`) so the QR code on `/` points to the live `/upload` page.
+Add the same env vars in the Vercel dashboard. Set `NEXT_PUBLIC_SITE_URL` to your final URL (e.g. `https://lidiya-farewell.vercel.app`) so the QR code on `/` points to the live `/upload` page.
 
 ## 5. Party night flow
 

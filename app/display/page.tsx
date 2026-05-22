@@ -779,7 +779,7 @@ function IdleState({ lineIndex }: { lineIndex: number }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/lydia-group.jpeg"
+          src="/lidiya-group.jpeg"
           alt="Lidiya and friends"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -802,7 +802,7 @@ function IdleState({ lineIndex }: { lineIndex: number }) {
           style={{ width: 220, height: 270 }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/lydia-selfie.jpeg" alt="" />
+          <img src="/lidiya-selfie.jpeg" alt="" />
         </motion.div>
       </motion.div>
 
