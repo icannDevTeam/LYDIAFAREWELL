@@ -9,7 +9,8 @@ import { SUGGESTED_WORDS } from "@/lib/types";
 type Status = "idle" | "uploading" | "success" | "error";
 
 export default function UploadPage() {
-  const fileInput = useRef<HTMLInputElement>(null);
+  const libraryInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [note, setNote] = useState("");
@@ -70,7 +71,8 @@ export default function UploadPage() {
       setPreview(null);
       setNote("");
       setAuthor("");
-      if (fileInput.current) fileInput.current.value = "";
+      if (libraryInput.current) libraryInput.current.value = "";
+      if (cameraInput.current) cameraInput.current.value = "";
     } catch (err: any) {
       console.error(err);
       setError(err?.message || "Something went wrong. Please try again.");
@@ -111,7 +113,7 @@ export default function UploadPage() {
             </label>
             <div
               className="relative rounded-2xl overflow-hidden bg-black/30 border border-white/10 aspect-[4/5] flex items-center justify-center cursor-pointer"
-              onClick={() => fileInput.current?.click()}
+              onClick={() => libraryInput.current?.click()}
             >
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -119,16 +121,44 @@ export default function UploadPage() {
               ) : (
                 <div className="text-center px-6">
                   <div className="text-4xl mb-2">📸</div>
-                  <p className="text-sunset-100/90">Tap to take a photo or pick one</p>
+                  <p className="text-sunset-100/90">Tap to pick a photo</p>
                   <p className="text-xs text-sunset-100/60 mt-1">Selfies welcome!</p>
                 </div>
               )}
             </div>
+
+            {/* Two distinct buttons so iOS/Android show Library vs Camera reliably */}
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <button
+                type="button"
+                onClick={() => libraryInput.current?.click()}
+                className="py-3 rounded-xl bg-white/10 hover:bg-white/20 text-sunset-50 text-sm font-medium transition"
+              >
+                🖼️ Choose from gallery
+              </button>
+              <button
+                type="button"
+                onClick={() => cameraInput.current?.click()}
+                className="py-3 rounded-xl bg-white/10 hover:bg-white/20 text-sunset-50 text-sm font-medium transition"
+              >
+                📷 Take a photo
+              </button>
+            </div>
+
+            {/* Gallery picker — no capture attribute, opens the OS photo library */}
             <input
-              ref={fileInput}
+              ref={libraryInput}
               type="file"
               accept="image/*"
-              capture="user"
+              className="hidden"
+              onChange={(e) => onPick(e.target.files?.[0] || null)}
+            />
+            {/* Camera capture — opens the camera directly */}
+            <input
+              ref={cameraInput}
+              type="file"
+              accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={(e) => onPick(e.target.files?.[0] || null)}
             />
