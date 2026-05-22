@@ -5,7 +5,6 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getDb, getStorageRef, COLLECTION, isFirebaseConfigured } from "@/lib/firebase";
 import { SUGGESTED_WORDS } from "@/lib/types";
-import InstallPrompt from "./InstallPrompt";
 
 type Status = "idle" | "uploading" | "success" | "error";
 
@@ -282,7 +281,6 @@ export default function UploadPage() {
           With love · for Lidiya
         </p>
       </footer>
-      <InstallPrompt />
     </main>
   );
 }

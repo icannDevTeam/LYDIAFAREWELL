@@ -5,13 +5,6 @@ import PwaRegister from "./PwaRegister";
 export const metadata: Metadata = {
   title: "Farewell, Lidiya 💛",
   description: "A warm goodbye, written by all of us.",
-  manifest: "/manifest.webmanifest",
-  applicationName: "Lidiya Farewell",
-  appleWebApp: {
-    capable: true,
-    title: "Lidiya 💛",
-    statusBarStyle: "black-translucent",
-  },
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -33,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         {children}
+        {/* PwaRegister now runs a kill-switch: unregisters any SW + clears caches. */}
         <PwaRegister />
       </body>
     </html>
