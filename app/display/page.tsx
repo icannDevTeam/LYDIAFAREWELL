@@ -380,7 +380,7 @@ function ParticleLayer() {
           }}
           initial={{ y: 0, x: 0, opacity: 0 }}
           animate={{
-            y: -window?.innerHeight - 40 || -1000,
+            y: typeof window !== "undefined" ? -window.innerHeight - 40 : -1200,
             x: p.drift,
             opacity: [0, 0.9, 0.6, 0],
           }}
