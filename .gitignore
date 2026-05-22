@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+.vercel
+
+# Firebase service account / admin SDK private keys — NEVER commit
+*firebase-adminsdk*.json
+*-service-account*.json
+serviceAccountKey*.json
+secrets/
+
