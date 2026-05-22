@@ -71,7 +71,7 @@ export default function InstallPrompt() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon-192.png" alt="" className="w-10 h-10 rounded-xl" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium leading-tight">Add Lydia to your home screen</p>
+          <p className="text-sm font-medium leading-tight">Add Lidiya to your home screen</p>
           {iosHint ? (
             <p className="text-xs text-stone-500 mt-0.5">
               Tap <span aria-hidden>⎙</span> Share, then <b>Add to Home Screen</b>.

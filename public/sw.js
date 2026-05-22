@@ -1,4 +1,4 @@
-/* Lydia Farewell — minimal PWA service worker
+/* Lidiya Farewell — minimal PWA service worker
  * Strategy:
  *   - App shell (HTML, JS, CSS, images, icons) → stale-while-revalidate
  *   - Anything that talks to Firebase / Vercel APIs → always network (never cache)

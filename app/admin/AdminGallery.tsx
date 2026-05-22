@@ -83,7 +83,7 @@ export default function AdminGallery({
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-0">
             <p className="font-script text-base text-stone-500 leading-none">a warm goodbye for</p>
-            <h1 className="font-serif text-2xl text-stone-800 leading-tight">Lydia · Host Dashboard</h1>
+            <h1 className="font-serif text-2xl text-stone-800 leading-tight">Lidiya · Host Dashboard</h1>
           </div>
 
           <input
@@ -191,7 +191,7 @@ export default function AdminGallery({
         <section className="max-w-5xl mx-auto px-6 py-10">
           <div className="text-center mb-10 print-cover">
             <p className="font-script text-3xl text-stone-500">a warm goodbye for</p>
-            <h2 className="font-serif text-6xl text-stone-800">Lydia</h2>
+            <h2 className="font-serif text-6xl text-stone-800">Lidiya</h2>
             <p className="mt-3 text-stone-500 italic">
               messages from the people who love you · {messages.length} in all
             </p>
@@ -226,7 +226,7 @@ export default function AdminGallery({
       )}
 
       <footer className="no-print py-10 text-center text-xs text-stone-400 font-script text-sm">
-        made with love · for Lydia
+        made with love · for Lidiya
       </footer>
     </main>
   );

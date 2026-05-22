@@ -1,6 +1,6 @@
-# Farewell, Lydia 💛
+# Farewell, Lidiya 💛
 
-A warm, real-time farewell wall for Lydia.
+A warm, real-time farewell wall for Lidiya.
 
 - **`/`** — Landing page with a giant QR code (point a phone at it).
 - **`/upload`** — Mobile-friendly page where guests snap a selfie + write a note.
@@ -91,4 +91,4 @@ Drop your prepared photos into `/public/seed/` and (optionally) pre-seed Firesto
 
 ---
 
-Made with warmth for Lydia. ✨
+Made with warmth for Lidiya. ✨

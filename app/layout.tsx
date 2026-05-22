@@ -3,13 +3,13 @@ import "./globals.css";
 import PwaRegister from "./PwaRegister";
 
 export const metadata: Metadata = {
-  title: "Farewell, Lydia 💛",
+  title: "Farewell, Lidiya 💛",
   description: "A warm goodbye, written by all of us.",
   manifest: "/manifest.webmanifest",
-  applicationName: "Lydia Farewell",
+  applicationName: "Lidiya Farewell",
   appleWebApp: {
     capable: true,
-    title: "Lydia 💛",
+    title: "Lidiya 💛",
     statusBarStyle: "black-translucent",
   },
   icons: {

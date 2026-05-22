@@ -18,7 +18,7 @@ export default function AdminLogin({
         method="POST"
         className="w-full max-w-sm bg-white/80 backdrop-blur rounded-3xl p-8 shadow-xl border border-stone-200"
       >
-        <p className="font-script text-2xl text-stone-500 text-center">Lydia Farewell</p>
+        <p className="font-script text-2xl text-stone-500 text-center">Lidiya Farewell</p>
         <h1 className="font-serif text-3xl text-stone-800 text-center mb-6">Host Dashboard</h1>
 
         <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">

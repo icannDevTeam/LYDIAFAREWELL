@@ -42,7 +42,7 @@ export default function UploadPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!file) { setError("Please add a photo first."); return; }
-    if (!note.trim()) { setError("Please write a short note for Lydia."); return; }
+    if (!note.trim()) { setError("Please write a short note for Lidiya."); return; }
     if (!isFirebaseConfigured()) {
       setError("Firebase is not configured yet. Ask the host to set up .env.local.");
       return;
@@ -101,16 +101,16 @@ export default function UploadPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/lydia-selfie.jpeg"
-              alt="Lydia"
+              alt="Lidiya"
               className="w-28 h-28 object-cover rounded-sm"
             />
-            <p className="font-script text-stone-700 text-center mt-1 text-lg">Lydia</p>
+            <p className="font-script text-stone-700 text-center mt-1 text-lg">Lidiya</p>
           </div>
           <span className="absolute -top-2 -right-3 text-2xl rotate-12">💛</span>
         </div>
 
         <p className="font-script text-2xl text-sunset-200">A warm farewell for</p>
-        <h1 className="font-serif text-5xl text-shimmer leading-tight">Lydia</h1>
+        <h1 className="font-serif text-5xl text-shimmer leading-tight">Lidiya</h1>
         <p className="mt-3 text-sunset-100/85 text-[15px] max-w-sm mx-auto leading-relaxed">
           Snap a photo with her, jot a little note,
           <br className="hidden sm:block" /> and watch it land on the big screen.
@@ -211,7 +211,7 @@ export default function UploadPage() {
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="text-sm font-medium text-sunset-100">
-                Your message for Lydia
+                Your message for Lidiya
               </label>
               <button
                 type="button"
@@ -265,7 +265,7 @@ export default function UploadPage() {
       )}
 
       <footer className="mt-8 mb-4 text-center text-xs text-sunset-100/40 font-script text-sm">
-        made with love · for Lydia
+        made with love · for Lidiya
       </footer>
       <InstallPrompt />
     </main>

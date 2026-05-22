@@ -31,7 +31,7 @@ const SCENES: Scene[] = [
 const IDLE_LINES = [
   "Some friendships cross oceans…",
   "…and never lose their warmth.",
-  "Tonight, we celebrate Lydia.",
+  "Tonight, we celebrate Lidiya.",
   "Years of laughter. A lifetime of memories.",
   "Sunshine, even on the cloudy days.",
   "The friend who feels like home.",
@@ -153,7 +153,7 @@ export default function DisplayPage() {
       {/* Header */}
       <div className="absolute top-6 left-8 z-30 flex items-baseline gap-3">
         <span className="font-script text-2xl text-sunset-200/80">farewell,</span>
-        <span className="font-serif text-3xl text-shimmer">Lydia</span>
+        <span className="font-serif text-3xl text-shimmer">Lidiya</span>
       </div>
       {messages.length > 0 && (
         <div className="absolute top-6 right-8 z-30 text-sunset-100/60 text-sm font-medium tracking-wide">
