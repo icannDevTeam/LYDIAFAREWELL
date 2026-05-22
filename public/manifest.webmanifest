@@ -1,0 +1,17 @@
+{
+  "name": "Farewell, Lydia",
+  "short_name": "Lydia 💛",
+  "description": "Share a photo and a little message — it will appear on the big screen.",
+  "start_url": "/upload",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a0d1f",
+  "theme_color": "#2b0f1a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["social", "photo", "lifestyle"]
+}
