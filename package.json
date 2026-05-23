@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "watch": "node scripts/watch.mjs"
   },
   "dependencies": {
     "@types/archiver": "^7.0.0",
