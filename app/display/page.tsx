@@ -214,6 +214,47 @@ export default function DisplayPage() {
     }
   }, []);
 
+  // Screen Wake Lock — asks the OS to keep the display awake while /display
+  // is open so projectors / monitors don't blank during the party. The lock
+  // is automatically released when the tab is hidden, so we re-acquire it on
+  // visibilitychange. No-op on browsers without the API (older Safari, etc.).
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (type: "screen") => Promise<any> };
+    };
+    if (!nav.wakeLock) return;
+
+    let sentinel: any = null;
+    let cancelled = false;
+
+    async function acquire() {
+      try {
+        sentinel = await nav.wakeLock!.request("screen");
+        sentinel.addEventListener?.("release", () => {
+          // OS released the lock (tab hidden, battery saver, etc.).
+          sentinel = null;
+        });
+      } catch {
+        // Permission denied or unsupported — silently ignore.
+      }
+    }
+
+    function onVisible() {
+      if (document.visibilityState === "visible" && !sentinel && !cancelled) {
+        acquire();
+      }
+    }
+
+    acquire();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      try { sentinel?.release?.(); } catch {}
+    };
+  }, []);
+
   const focus = messages[focusIdx];
 
   return (
