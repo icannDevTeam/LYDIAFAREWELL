@@ -167,7 +167,6 @@ export default function UploadPage() {
                       muted
                       loop
                       playsInline
-                      controls
                     />
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */

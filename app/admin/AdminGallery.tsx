@@ -340,6 +340,11 @@ export default function AdminGallery({
                       playsInline
                       preload="metadata"
                       controls
+                      controlsList="nodownload"
+                      onVolumeChange={(e) => {
+                        const v = e.currentTarget;
+                        if (!v.muted) v.muted = true;
+                      }}
                       className="w-full h-auto block cursor-zoom-in bg-black"
                     />
                   ) : (
@@ -413,6 +418,11 @@ export default function AdminGallery({
                     playsInline
                     preload="metadata"
                     controls
+                    controlsList="nodownload"
+                    onVolumeChange={(e) => {
+                      const v = e.currentTarget;
+                      if (!v.muted) v.muted = true;
+                    }}
                     className="w-full aspect-[4/3] object-cover bg-black"
                   />
                 ) : (
@@ -460,8 +470,15 @@ export default function AdminGallery({
               <video
                 src={lightbox.imageUrl}
                 autoPlay
+                muted
+                loop
                 controls
                 playsInline
+                controlsList="nodownload"
+                onVolumeChange={(e) => {
+                  const v = e.currentTarget;
+                  if (!v.muted) v.muted = true;
+                }}
                 className="max-h-[75vh] w-auto rounded-lg shadow-2xl bg-black"
               />
             ) : (
