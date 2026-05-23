@@ -217,7 +217,10 @@ export default function DisplayPage() {
   const focus = messages[focusIdx];
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-black">
+    <main
+      data-screen="display"
+      className="relative w-screen h-screen overflow-hidden bg-black"
+    >
       {/* Animated warm gradient backdrop */}
       <div className="absolute inset-0 bg-animated-warm" />
 
@@ -614,12 +617,20 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
     () =>
       extras.map((_, i) => ({
         rot: (Math.random() - 0.5) * 18,
-        x: (Math.random() - 0.5) * 300,
-        y: (Math.random() - 0.5) * 120,
+        // Offsets expressed in vmin so the stack always fits the viewport,
+        // regardless of the TV's aspect ratio or window size.
+        x: (Math.random() - 0.5) * 32, // vmin
+        y: (Math.random() - 0.5) * 14, // vmin
         delay: 0.1 + i * 0.15,
       })),
     [extras],
   );
+
+  // Photo sizes scale with the smaller viewport axis so the layout never
+  // overflows in fullscreen on any resolution.
+  const extraSize = "min(28vmin, 280px)";
+  const focusW = "min(40vmin, 460px)";
+  const focusH = "min(50vmin, 560px)";
 
   return (
     <div className="absolute inset-0 flex items-center justify-center film-grain">
@@ -627,11 +638,11 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
         {extras.map((m, i) => (
           <motion.div
             key={m.id}
-            initial={{ opacity: 0, scale: 0.6, rotate: layout[i].rot * 2, x: layout[i].x, y: -400 }}
-            animate={{ opacity: 1, scale: 1, rotate: layout[i].rot, x: layout[i].x, y: layout[i].y }}
+            initial={{ opacity: 0, scale: 0.6, rotate: layout[i].rot * 2, x: `${layout[i].x}vmin`, y: "-40vmin" }}
+            animate={{ opacity: 1, scale: 1, rotate: layout[i].rot, x: `${layout[i].x}vmin`, y: `${layout[i].y}vmin` }}
             transition={{ duration: 0.9, delay: layout[i].delay, ease: [0.22, 1, 0.36, 1] }}
             className="polaroid absolute"
-            style={{ width: 260, height: 320 }}
+            style={{ width: extraSize, height: `calc(${extraSize} * 1.23)` }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={m.imageUrl} alt="" />
@@ -640,11 +651,11 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.4, rotate: -10, y: -300 }}
+        initial={{ opacity: 0, scale: 0.4, rotate: -10, y: "-30vmin" }}
         animate={{ opacity: 1, scale: 1, rotate: -2, y: 0 }}
         transition={{ duration: 1.0, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="polaroid relative z-10 -ml-32"
-        style={{ width: 420, height: 520 }}
+        className="polaroid relative z-10"
+        style={{ width: focusW, height: focusH, marginLeft: "-4vmin" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={focus.imageUrl} alt="" />
@@ -654,7 +665,7 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
         initial={{ opacity: 0, x: 60 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 1.2, delay: 1.4, ease: "easeOut" }}
-        className="relative z-10 ml-16 max-w-md"
+        className="relative z-10 ml-8 lg:ml-12 max-w-md"
       >
         <span className="text-[10px] tracking-[0.35em] uppercase text-sunset-200/70">
           A memory
@@ -858,7 +869,10 @@ function IdleState({ lineIndex }: { lineIndex: number }) {
           <p className="text-[11px] md:text-sm tracking-[0.45em] uppercase text-sunset-200/80 mb-6">
             A farewell celebration
           </p>
-          <h1 className="font-serif italic text-[8rem] md:text-[12rem] leading-none font-medium text-shimmer drop-shadow-2xl">
+          <h1
+            className="font-serif italic leading-none font-medium text-shimmer drop-shadow-2xl"
+            style={{ fontSize: "clamp(5rem, 18vmin, 14rem)" }}
+          >
             Lidiya
           </h1>
         </motion.div>

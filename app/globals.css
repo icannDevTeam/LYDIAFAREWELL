@@ -112,3 +112,23 @@ body {
   opacity: 0.5;
 }
 
+/* TV display lock: when the <main data-screen="display"> mounts we forbid any
+   page-level scroll, hide overflow, and use dynamic viewport units so the
+   layout fills the screen exactly in fullscreen / installed-PWA mode. */
+html:has(main[data-screen="display"]),
+body:has(main[data-screen="display"]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+main[data-screen="display"] {
+  /* svh = small viewport height, matches the safe area in every browser. */
+  height: 100svh;
+  min-height: 100svh;
+}
+@supports not (height: 100svh) {
+  main[data-screen="display"] {
+    height: 100vh;
+    min-height: 100vh;
+  }
+}
+
