@@ -100,16 +100,13 @@ export default function QrPage() {
         </button>
       )}
 
-      {/* Footer */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center">
-        <div className="mx-auto h-px w-16 bg-gradient-to-r from-transparent via-sunset-300/40 to-transparent mb-3" />
-        <p className="text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
-          With love · for Lidiya
-        </p>
-        <p className="mt-2 text-[10px] tracking-[0.3em] uppercase text-sunset-100/30">
-          © 2026 · Built and designed by Albert
-        </p>
-      </div>
+      {/* Footer credits: Albert bottom-left, Lidiya bottom-right */}
+      <p className="absolute bottom-5 left-6 text-[10px] tracking-[0.3em] uppercase text-sunset-100/35">
+        © 2026 · Built and designed by Albert
+      </p>
+      <p className="absolute bottom-5 right-6 text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
+        With love · for Lidiya
+      </p>
 
       {/* Top corner: tiny link to TV display (so the host can flip back) */}
       <a

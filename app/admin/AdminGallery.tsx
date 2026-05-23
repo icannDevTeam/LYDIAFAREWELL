@@ -353,11 +353,11 @@ export default function AdminGallery({
         </section>
       )}
 
-      <footer className="no-print py-10 text-center text-xs text-stone-400">
-        <p className="font-script text-sm">made with love · for Lidiya</p>
-        <p className="mt-1 text-[11px] tracking-wide text-stone-400">
+      <footer className="no-print mt-4 px-6 py-6 flex items-center justify-between text-xs text-stone-400 border-t border-stone-200">
+        <p className="tracking-wide">
           © 2026 · Built and designed by Albert
         </p>
+        <p className="font-script text-sm text-stone-500">made with love · for Lidiya</p>
       </footer>
 
       {/* Lightbox */}

@@ -288,14 +288,16 @@ export default function UploadPage() {
         </form>
       )}
 
-      <footer className="mt-10 mb-4 text-center">
+      <footer className="mt-10 mb-4">
         <div className="mx-auto h-px w-16 bg-gradient-to-r from-transparent via-sunset-300/40 to-transparent" />
-        <p className="mt-3 text-[10px] tracking-[0.35em] uppercase text-sunset-100/40">
-          With love · for Lidiya
-        </p>
-        <p className="mt-2 text-[10px] tracking-[0.3em] uppercase text-sunset-100/30">
-          © 2026 · Built and designed by Albert
-        </p>
+        <div className="mt-3 flex items-center justify-between gap-4 text-[10px] tracking-[0.3em] uppercase">
+          <p className="text-sunset-100/30">
+            © 2026 · Albert
+          </p>
+          <p className="text-sunset-100/45 tracking-[0.35em]">
+            With love · for Lidiya
+          </p>
+        </div>
       </footer>
     </main>
   );

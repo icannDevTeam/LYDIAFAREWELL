@@ -288,31 +288,31 @@ export default function DisplayPage() {
 
       {/* Footer: scene dots + helper */}
       {messages.length > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2.5">
-          <div className="flex items-center gap-2">
-            {SCENES.map((s) => {
-              const isActive = s.type === scene.type;
-              return (
-                <span
-                  key={s.type}
-                  className={`h-1.5 rounded-full transition-all duration-700 ${
-                    isActive
-                      ? "w-8 bg-sunset-200 shadow-[0_0_12px_rgba(253,186,116,0.5)]"
-                      : "w-1.5 bg-sunset-200/25"
-                  }`}
-                  aria-label={s.label}
-                />
-              );
-            })}
-          </div>
-          <p className="text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
-            With love · for Lidiya
-          </p>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-sunset-100/30">
-            © 2026 · Built and designed by Albert
-          </p>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+          {SCENES.map((s) => {
+            const isActive = s.type === scene.type;
+            return (
+              <span
+                key={s.type}
+                className={`h-1.5 rounded-full transition-all duration-700 ${
+                  isActive
+                    ? "w-8 bg-sunset-200 shadow-[0_0_12px_rgba(253,186,116,0.5)]"
+                    : "w-1.5 bg-sunset-200/25"
+                }`}
+                aria-label={s.label}
+              />
+            );
+          })}
         </div>
       )}
+
+      {/* Footer credits: Albert bottom-left, Lidiya bottom-right */}
+      <p className="absolute bottom-6 left-8 z-30 text-[10px] tracking-[0.3em] uppercase text-sunset-100/35">
+        © 2026 · Built and designed by Albert
+      </p>
+      <p className="absolute bottom-6 right-8 z-30 text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
+        With love · for Lidiya
+      </p>
     </main>
   );
 }
