@@ -293,6 +293,9 @@ export default function UploadPage() {
         <p className="mt-3 text-[10px] tracking-[0.35em] uppercase text-sunset-100/40">
           With love · for Lidiya
         </p>
+        <p className="mt-2 text-[10px] tracking-[0.3em] uppercase text-sunset-100/30">
+          © 2026 · Built and designed by Albert
+        </p>
       </footer>
     </main>
   );

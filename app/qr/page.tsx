@@ -106,6 +106,9 @@ export default function QrPage() {
         <p className="text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
           With love · for Lidiya
         </p>
+        <p className="mt-2 text-[10px] tracking-[0.3em] uppercase text-sunset-100/30">
+          © 2026 · Built and designed by Albert
+        </p>
       </div>
 
       {/* Top corner: tiny link to TV display (so the host can flip back) */}

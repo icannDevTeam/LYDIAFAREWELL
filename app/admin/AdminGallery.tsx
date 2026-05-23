@@ -353,8 +353,11 @@ export default function AdminGallery({
         </section>
       )}
 
-      <footer className="no-print py-10 text-center text-xs text-stone-400 font-script text-sm">
-        made with love · for Lidiya
+      <footer className="no-print py-10 text-center text-xs text-stone-400">
+        <p className="font-script text-sm">made with love · for Lidiya</p>
+        <p className="mt-1 text-[11px] tracking-wide text-stone-400">
+          © 2026 · Built and designed by Albert
+        </p>
       </footer>
 
       {/* Lightbox */}

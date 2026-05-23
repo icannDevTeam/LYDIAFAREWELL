@@ -308,6 +308,9 @@ export default function DisplayPage() {
           <p className="text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
             With love · for Lidiya
           </p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-sunset-100/30">
+            © 2026 · Built and designed by Albert
+          </p>
         </div>
       )}
     </main>
