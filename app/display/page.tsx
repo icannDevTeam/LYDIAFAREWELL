@@ -255,6 +255,35 @@ export default function DisplayPage() {
     };
   }, []);
 
+  // Connection resilience — if the device's Wi-Fi drops, browsers will show
+  // their generic "this site can't be reached" page on the next navigation.
+  // We can't prevent that, but we CAN: show our own friendly overlay while
+  // offline, and auto-reload as soon as connectivity comes back so the
+  // slideshow recovers without anyone touching the projector.
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    setIsOnline(navigator.onLine);
+    let reloadTimer: ReturnType<typeof setTimeout> | null = null;
+    function onOnline() {
+      setIsOnline(true);
+      // Wait a beat for the network to actually stabilize, then refresh so
+      // the Firestore subscription and image URLs are guaranteed healthy.
+      reloadTimer = setTimeout(() => window.location.reload(), 1500);
+    }
+    function onOffline() {
+      setIsOnline(false);
+      if (reloadTimer) { clearTimeout(reloadTimer); reloadTimer = null; }
+    }
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+      if (reloadTimer) clearTimeout(reloadTimer);
+    };
+  }, []);
+
   const focus = messages[focusIdx];
 
   return (
@@ -397,6 +426,33 @@ export default function DisplayPage() {
       <p className="absolute bottom-6 right-8 z-30 text-[10px] tracking-[0.35em] uppercase text-sunset-100/45">
         With love · for Lidiya
       </p>
+
+      {/* Offline overlay — soft, on-brand. Stays until the browser reports
+          "online" again, then we auto-reload to recover the live feed. */}
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            key="offline"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-[#1a0905]/85 backdrop-blur-md"
+          >
+            <div className="glass rounded-3xl px-10 py-8 text-center max-w-md">
+              <p className="text-[11px] tracking-[0.35em] uppercase text-sunset-200/70">
+                Reconnecting
+              </p>
+              <p className="mt-3 font-serif italic text-3xl text-sunset-50">
+                One moment
+              </p>
+              <p className="mt-3 text-sunset-100/70 text-sm">
+                Lost the network for a second. The wall will be back as soon as it's available.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
