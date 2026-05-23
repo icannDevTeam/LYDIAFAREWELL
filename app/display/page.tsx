@@ -76,6 +76,49 @@ function sample<T extends { id: string }>(arr: T[], n: number, excludeId?: strin
   return pool.slice(0, Math.min(n, pool.length));
 }
 
+// Multi-photo scenes (polaroid stack / collage / mosaic) look odd with
+// videos as background tiles, so we only feed them image messages.
+function imagesOnly<T extends Message>(arr: T[]): T[] {
+  return arr.filter((m) => m.mediaType !== "video");
+}
+
+// Single component that renders a message's media — image or video — with
+// the same className/style hooks so existing scenes don't need to branch.
+function MediaTile({
+  message,
+  className,
+  style,
+  fit = "cover",
+}: {
+  message: Message;
+  className?: string;
+  style?: React.CSSProperties;
+  fit?: "cover" | "contain";
+}) {
+  if (message.mediaType === "video") {
+    return (
+      <video
+        src={message.imageUrl}
+        className={`${className || ""} ${fit === "cover" ? "object-cover" : "object-contain"}`}
+        style={style}
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={message.imageUrl}
+      alt=""
+      className={`${className || ""} ${fit === "cover" ? "object-cover" : "object-contain"}`}
+      style={style}
+    />
+  );
+}
+
 // --- Page -------------------------------------------------------------------
 
 export default function DisplayPage() {
@@ -109,6 +152,7 @@ export default function DisplayPage() {
               return {
                 id: d.id,
                 imageUrl: data.imageUrl,
+                mediaType: data.mediaType === "video" ? "video" : "image",
                 note: data.note || "",
                 author: data.author || undefined,
                 createdAt: ts?.toMillis?.() ?? Date.now(),
@@ -380,11 +424,9 @@ export default function DisplayPage() {
             className="absolute top-6 left-1/2 -translate-x-1/2 z-40"
           >
             <div className="glass rounded-full pl-2 pr-6 py-2 flex items-center gap-3 shadow-2xl border border-sunset-300/30">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={toast.imageUrl}
-                alt=""
-                className="w-9 h-9 rounded-full object-cover border border-white/30"
+              <MediaTile
+                message={toast}
+                className="w-9 h-9 rounded-full border border-white/30"
               />
               <div className="text-left">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-sunset-200/80">
@@ -580,14 +622,25 @@ function HeroScene({ message }: { message: Message }) {
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <motion.img
-          src={message.imageUrl}
-          alt=""
-          initial={{ scale: 1.15 }}
-          animate={{ scale: 1.0 }}
-          transition={{ duration: 8, ease: "linear" }}
-          className="relative w-full h-full object-cover"
-        />
+        {message.mediaType === "video" ? (
+          <video
+            src={message.imageUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="relative w-full h-full object-cover"
+          />
+        ) : (
+          <motion.img
+            src={message.imageUrl}
+            alt=""
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1.0 }}
+            transition={{ duration: 8, ease: "linear" }}
+            className="relative w-full h-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#2a0f0a]/70" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#2a0f0a]/60 via-transparent to-transparent" />
       </div>
@@ -634,15 +687,26 @@ function KenBurnsScene({ message }: { message: Message }) {
 
   return (
     <div className="absolute inset-0 overflow-hidden film-grain">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <motion.img
-        src={message.imageUrl}
-        alt=""
-        initial={dir.from as any}
-        animate={dir.to as any}
-        transition={{ duration: 9, ease: "linear" }}
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      {message.mediaType === "video" ? (
+        <video
+          src={message.imageUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <motion.img
+          src={message.imageUrl}
+          alt=""
+          initial={dir.from as any}
+          animate={dir.to as any}
+          transition={{ duration: 9, ease: "linear" }}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-[#1a0905]/95 via-[#2a0f0a]/30 to-transparent" />
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -669,15 +733,26 @@ function QuoteScene({ message }: { message: Message }) {
   return (
     <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 film-grain">
       <div className="relative overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <motion.img
-          src={message.imageUrl}
-          alt=""
-          initial={{ scale: 1.08 }}
-          animate={{ scale: 1.0 }}
-          transition={{ duration: 10, ease: "linear" }}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {message.mediaType === "video" ? (
+          <video
+            src={message.imageUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <motion.img
+            src={message.imageUrl}
+            alt=""
+            initial={{ scale: 1.08 }}
+            animate={{ scale: 1.0 }}
+            transition={{ duration: 10, ease: "linear" }}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1a0905]/40" />
       </div>
       <div className="relative flex items-center px-16 py-12">
@@ -709,7 +784,7 @@ function QuoteScene({ message }: { message: Message }) {
 // --- Scene: Polaroid stack --------------------------------------------------
 
 function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) {
-  const extras = useMemo(() => sample(all, 4, focus.id), [focus.id, all]);
+  const extras = useMemo(() => sample(imagesOnly(all), 4, focus.id), [focus.id, all]);
   const layout = useMemo(
     () =>
       extras.map((_, i) => ({
@@ -754,8 +829,7 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
         className="polaroid relative z-10"
         style={{ width: focusW, height: focusH, marginLeft: "-4vmin" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={focus.imageUrl} alt="" />
+        <MediaTile message={focus} className="w-full h-full" />
       </motion.div>
 
       <motion.div
@@ -784,7 +858,7 @@ function PolaroidStackScene({ focus, all }: { focus: Message; all: Message[] }) 
 
 function CollagePopScene({ focus, all }: { focus: Message; all: Message[] }) {
   const wanted = Math.min(9, Math.max(0, all.length - 1));
-  const extras = useMemo(() => sample(all, wanted, focus.id), [focus.id, all, wanted]);
+  const extras = useMemo(() => sample(imagesOnly(all), wanted, focus.id), [focus.id, all, wanted]);
 
   const positions = useMemo(() => {
     return extras.map(() => {
@@ -838,8 +912,10 @@ function CollagePopScene({ focus, all }: { focus: Message; all: Message[] }) {
         style={{ width: "min(46vw, 540px)" }}
       >
         <div className="warm-glow rounded-2xl overflow-hidden bg-black/40">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={focus.imageUrl} alt="" className="w-full aspect-[4/5] object-cover" />
+          <MediaTile
+            message={focus}
+            className="w-full aspect-[4/5]"
+          />
           <div className="p-6 bg-gradient-to-b from-[#2a0f0a]/80 to-[#1a0905]/95">
             <p className="font-serif italic text-xl leading-snug text-sunset-50">
               “{focus.note}”
@@ -860,11 +936,12 @@ function CollagePopScene({ focus, all }: { focus: Message; all: Message[] }) {
 
 function MosaicScene({ focus, all }: { focus: Message; all: Message[] }) {
   const tiles = useMemo(() => {
-    const others = sample(all, 8, focus.id);
+    const others = sample(imagesOnly(all), 8, focus.id);
     const arr: Message[] = [];
     for (let i = 0; i < 9; i++) {
       if (i === 4) arr.push(focus);
-      else arr.push(others[i % Math.max(1, others.length)]);
+      else if (others.length > 0) arr.push(others[i % others.length]);
+      else arr.push(focus);
     }
     return arr;
   }, [focus.id, all]);
@@ -888,8 +965,7 @@ function MosaicScene({ focus, all }: { focus: Message; all: Message[] }) {
                 isFocus ? "ring-4 ring-sunset-300/60 warm-glow z-10" : ""
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.imageUrl} alt="" className="w-full h-full object-cover" />
+              <MediaTile message={m} className="w-full h-full" />
               {!isFocus && (
                 <div className="absolute inset-0 bg-gradient-to-br from-[#2a0f0a]/40 to-[#6b2d1a]/30" />
               )}

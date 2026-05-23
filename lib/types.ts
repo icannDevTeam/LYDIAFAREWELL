@@ -1,6 +1,7 @@
 export type Message = {
   id: string;
-  imageUrl: string;
+  imageUrl: string;          // download URL (image OR video file)
+  mediaType?: "image" | "video";
   note: string;
   author?: string;
   createdAt: number;

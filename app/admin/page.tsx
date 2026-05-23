@@ -26,6 +26,7 @@ async function loadMessages(): Promise<AdminMessage[]> {
     return {
       id: d.id,
       imageUrl: data.imageUrl,
+      mediaType: data.mediaType === "video" ? "video" : "image",
       note: data.note,
       author: data.author || null,
       storagePath: data.storagePath || null,

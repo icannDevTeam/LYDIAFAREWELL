@@ -18,14 +18,24 @@ export default function UploadPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  const IMAGE_LIMIT = 10 * 1024 * 1024;   // 10 MB
+  const VIDEO_LIMIT = 50 * 1024 * 1024;   // 50 MB
+
   function onPick(f: File | null) {
     if (!f) return;
-    if (!f.type.startsWith("image/")) {
-      setError("Please pick an image.");
+    const isImage = f.type.startsWith("image/");
+    const isVideo = f.type.startsWith("video/");
+    if (!isImage && !isVideo) {
+      setError("Please pick a photo or short video.");
       return;
     }
-    if (f.size > 10 * 1024 * 1024) {
-      setError("Image must be under 10 MB.");
+    const limit = isVideo ? VIDEO_LIMIT : IMAGE_LIMIT;
+    if (f.size > limit) {
+      setError(
+        isVideo
+          ? "Video must be under 50 MB. Try a shorter clip."
+          : "Image must be under 10 MB.",
+      );
       return;
     }
     setError(null);
@@ -40,7 +50,7 @@ export default function UploadPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file) { setError("Please add a photo first."); return; }
+    if (!file) { setError("Please add a photo or short video first."); return; }
     if (!note.trim()) { setError("Please write a short note for Lidiya."); return; }
     if (!isFirebaseConfigured()) {
       setError("Firebase is not configured yet. Ask the host to set up .env.local.");
@@ -57,9 +67,13 @@ export default function UploadPage() {
       const ref = storageRef(storage, path);
       await uploadBytes(ref, file, { contentType: file.type });
       const imageUrl = await getDownloadURL(ref);
+      const mediaType: "image" | "video" = file.type.startsWith("video/")
+        ? "video"
+        : "image";
 
       await addDoc(collection(db, COLLECTION), {
         imageUrl,
+        mediaType,
         note: note.trim(),
         author: author.trim() || null,
         storagePath: path,
@@ -145,12 +159,24 @@ export default function UploadPage() {
                       "radial-gradient(ellipse at center, rgba(255,176,107,0.10), rgba(0,0,0,0.35) 70%)",
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={preview}
-                    alt="Your photo preview"
-                    className="absolute inset-0 w-full h-full object-contain"
-                  />
+                  {file?.type.startsWith("video/") ? (
+                    <video
+                      src={preview}
+                      className="absolute inset-0 w-full h-full object-contain bg-black"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      controls
+                    />
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={preview}
+                      alt="Your photo preview"
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
+                  )}
                   <div
                     aria-hidden
                     className="pointer-events-none absolute inset-0"
@@ -186,10 +212,10 @@ export default function UploadPage() {
                   </svg>
                 </div>
                 <p className="font-serif italic text-sunset-50 text-[15px]">
-                  Your photo will appear here
+                  Your photo or video will appear here
                 </p>
                 <p className="mt-1 text-[11px] tracking-wide text-sunset-100/55">
-                  Choose from gallery or take a new one below
+                  Photo or short clip · up to 10 MB photo or 50 MB video
                 </p>
               </div>
             )}
@@ -216,7 +242,7 @@ export default function UploadPage() {
             <input
               ref={libraryInput}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               className="hidden"
               onChange={(e) => onPick(e.target.files?.[0] || null)}
             />
@@ -224,7 +250,7 @@ export default function UploadPage() {
             <input
               ref={cameraInput}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               capture="environment"
               className="hidden"
               onChange={(e) => onPick(e.target.files?.[0] || null)}

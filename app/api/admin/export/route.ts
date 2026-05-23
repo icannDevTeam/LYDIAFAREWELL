@@ -67,13 +67,20 @@ export async function GET(req: NextRequest) {
       try {
         const res = await fetch(url);
         if (res.ok) {
-          const ct = res.headers.get("content-type") || "";
-          const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
+          const ct = (res.headers.get("content-type") || "").toLowerCase();
+          let ext = "jpg";
+          if (ct.includes("png")) ext = "png";
+          else if (ct.includes("webp")) ext = "webp";
+          else if (ct.includes("gif")) ext = "gif";
+          else if (ct.includes("quicktime") || ct.includes("mov")) ext = "mov";
+          else if (ct.includes("webm")) ext = "webm";
+          else if (ct.includes("mp4") || ct.startsWith("video/")) ext = "mp4";
+          const folder = ct.startsWith("video/") ? "videos" : "photos";
           const buf = Buffer.from(await res.arrayBuffer());
-          archive.append(buf, { name: `photos/${base}.${ext}` });
+          archive.append(buf, { name: `${folder}/${base}.${ext}` });
         }
       } catch (e) {
-        manifestLines.push(`  [photo fetch failed]`);
+        manifestLines.push(`  [media fetch failed]`);
       }
     }
   }

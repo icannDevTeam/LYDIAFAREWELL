@@ -13,6 +13,7 @@ import { getDb, COLLECTION, isFirebaseConfigured } from "@/lib/firebase";
 export type AdminMessage = {
   id: string;
   imageUrl: string;
+  mediaType?: "image" | "video";
   note: string;
   author: string | null;
   storagePath: string | null;
@@ -66,6 +67,7 @@ export default function AdminGallery({
             return {
               id: d.id,
               imageUrl: data.imageUrl,
+              mediaType: data.mediaType === "video" ? "video" : "image",
               note: data.note || "",
               author: data.author || null,
               storagePath: data.storagePath || null,
@@ -329,14 +331,27 @@ export default function AdminGallery({
                     </span>
                   )}
 
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={m.imageUrl}
-                    alt=""
-                    loading="lazy"
-                    onClick={() => setLightbox(m)}
-                    className="w-full h-auto block cursor-zoom-in"
-                  />
+                  {m.mediaType === "video" ? (
+                    <video
+                      src={m.imageUrl}
+                      onClick={() => setLightbox(m)}
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      controls
+                      className="w-full h-auto block cursor-zoom-in bg-black"
+                    />
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={m.imageUrl}
+                      alt=""
+                      loading="lazy"
+                      onClick={() => setLightbox(m)}
+                      className="w-full h-auto block cursor-zoom-in"
+                    />
+                  )}
                   <div className="p-4">
                     <p className="font-serif text-[17px] leading-snug text-stone-800 whitespace-pre-wrap">
                       “{m.note}”
@@ -391,13 +406,24 @@ export default function AdminGallery({
                 key={m.id}
                 className="print-card bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  className="w-full aspect-[4/3] object-cover"
-                />
+                {m.mediaType === "video" ? (
+                  <video
+                    src={m.imageUrl}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    controls
+                    className="w-full aspect-[4/3] object-cover bg-black"
+                  />
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={m.imageUrl}
+                    alt=""
+                    loading="lazy"
+                    className="w-full aspect-[4/3] object-cover"
+                  />
+                )}
                 <div className="p-5">
                   <p className="font-serif text-lg leading-relaxed text-stone-800 whitespace-pre-wrap">
                     “{m.note}”
@@ -430,12 +456,22 @@ export default function AdminGallery({
             onClick={(e) => e.stopPropagation()}
             className="relative max-w-5xl w-full max-h-full flex flex-col items-center"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={lightbox.imageUrl}
-              alt=""
-              className="max-h-[75vh] w-auto rounded-lg shadow-2xl"
-            />
+            {lightbox.mediaType === "video" ? (
+              <video
+                src={lightbox.imageUrl}
+                autoPlay
+                controls
+                playsInline
+                className="max-h-[75vh] w-auto rounded-lg shadow-2xl bg-black"
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={lightbox.imageUrl}
+                alt=""
+                className="max-h-[75vh] w-auto rounded-lg shadow-2xl"
+              />
+            )}
             <div className="mt-4 max-w-2xl text-center text-white">
               <p className="font-serif italic text-xl leading-snug">
                 “{lightbox.note}”
