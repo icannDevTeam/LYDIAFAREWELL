@@ -5,6 +5,12 @@ import PwaRegister from "./PwaRegister";
 export const metadata: Metadata = {
   title: "Farewell, Lidiya 💛",
   description: "A warm goodbye, written by all of us.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Lidiya TV",
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },

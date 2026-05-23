@@ -86,6 +86,7 @@ export default function DisplayPage() {
   const [idleLine, setIdleLine] = useState(0);
   const [configError, setConfigError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [toast, setToast] = useState<Message | null>(null);
   const prevSceneType = useRef<SceneType | null>(null);
 
@@ -183,13 +184,35 @@ export default function DisplayPage() {
         e.preventDefault();
         setPaused((p) => !p);
       } else if (e.key.toLowerCase() === "f") {
-        if (document.fullscreenElement) document.exitFullscreen?.();
-        else document.documentElement.requestFullscreen?.();
+        toggleFullscreen();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
+
+  // Track fullscreen state so the button label/icon updates when the user
+  // enters/exits via Esc, the hotkey, or the OS chrome.
+  useEffect(() => {
+    function onChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (typeof document === "undefined") return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      document.documentElement.requestFullscreen?.().catch(() => {
+        // Some browsers (iOS Safari) don't support fullscreen API on arbitrary
+        // elements. Installing as a PWA via Add to Home Screen gives the same
+        // chromeless experience.
+      });
+    }
+  }, []);
 
   const focus = messages[focusIdx];
 
@@ -219,6 +242,23 @@ export default function DisplayPage() {
               Paused
             </span>
           )}
+          <button
+            onClick={toggleFullscreen}
+            className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.14] border border-white/15 text-sunset-100/85 hover:text-sunset-50 transition"
+            title={isFullscreen ? "Exit fullscreen (F)" : "Enter fullscreen (F)"}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            {isFullscreen ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+              </svg>
+            )}
+            <span>{isFullscreen ? "Exit" : "Fullscreen"}</span>
+          </button>
         </div>
       )}
 
