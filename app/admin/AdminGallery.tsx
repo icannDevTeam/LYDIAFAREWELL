@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query as fsQuery,
+  Timestamp,
+} from "firebase/firestore";
+import { getDb, COLLECTION, isFirebaseConfigured } from "@/lib/firebase";
 
 export type AdminMessage = {
   id: string;
@@ -32,11 +40,53 @@ export default function AdminGallery({
   const [busy, setBusy] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<AdminMessage | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [live, setLive] = useState(false);
 
   // Re-tick once a minute so "NEW" badges fade out without a refresh.
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(t);
+  }, []);
+
+  // Live subscription to Firestore so new uploads appear without a refresh.
+  // We merge realtime data into local state, preserving optimistic edits
+  // (delete / hide) that the user just made via the API.
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+    let unsub: (() => void) | undefined;
+    try {
+      const db = getDb();
+      const q = fsQuery(collection(db, COLLECTION), orderBy("createdAt", "desc"));
+      unsub = onSnapshot(
+        q,
+        (snap) => {
+          const next: AdminMessage[] = snap.docs.map((d) => {
+            const data = d.data() as any;
+            const ts: Timestamp | undefined = data.createdAt;
+            return {
+              id: d.id,
+              imageUrl: data.imageUrl,
+              note: data.note || "",
+              author: data.author || null,
+              storagePath: data.storagePath || null,
+              createdAt: ts?.toMillis?.() ?? Date.now(),
+              hidden: data.hidden === true,
+            };
+          });
+          setMessages(next);
+          setLive(true);
+        },
+        (err) => {
+          console.warn("admin live subscription failed:", err?.message);
+          setLive(false);
+        },
+      );
+    } catch (e: any) {
+      console.warn("admin live subscription threw:", e?.message);
+    }
+    return () => {
+      if (unsub) unsub();
+    };
   }, []);
 
   // Esc closes lightbox
@@ -213,6 +263,16 @@ export default function AdminGallery({
         </div>
 
         <div className="max-w-7xl mx-auto px-6 pb-3 text-xs text-stone-500 flex flex-wrap items-center gap-4">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className={`inline-block w-1.5 h-1.5 rounded-full ${
+                live ? "bg-emerald-500 animate-pulse" : "bg-stone-400"
+              }`}
+              aria-hidden
+            />
+            <span className="tracking-wide">{live ? "Live" : "Offline"}</span>
+          </span>
+          <span className="opacity-50">·</span>
           <span>{visibleCount} on display</span>
           {hiddenCount > 0 && (
             <button
